@@ -105,6 +105,14 @@ export default {
 				'subtle-blur': {
 					'0%': { backdropFilter: 'blur(8px)' },
 					'100%': { backdropFilter: 'blur(12px)' }
+				},
+				'card-hover': {
+					'0%': { transform: 'translateY(0)' },
+					'100%': { transform: 'translateY(-8px)' }
+				},
+				'card-shine': {
+					'0%': { backgroundPosition: '-100% 0' },
+					'100%': { backgroundPosition: '200% 0' }
 				}
 			},
 			animation: {
@@ -114,7 +122,9 @@ export default {
 				'fade-up': 'fade-up 0.7s ease-out',
 				'fade-down': 'fade-down 0.7s ease-out',
 				'soft-pulse': 'soft-pulse 4s ease-in-out infinite',
-				'subtle-blur': 'subtle-blur 4s ease-in-out infinite'
+				'subtle-blur': 'subtle-blur 4s ease-in-out infinite',
+				'card-hover': 'card-hover 0.5s ease-out forwards',
+				'card-shine': 'card-shine 3s linear infinite'
 			}
 		}
 	},

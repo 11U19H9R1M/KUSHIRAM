@@ -48,33 +48,42 @@
   }
 
   .dark {
-    --background: 0 0% 10%;
+    --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 12%;
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 12%;
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 12%;
+    --primary-foreground: 240 5.9% 10%;
 
-    --secondary: 0 0% 20%;
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 0 0% 20%;
+    --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 83%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 240 4.9% 83.9%;
   }
 }
 
@@ -87,6 +96,7 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv09";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply scroll-smooth;
   }
 
   body {
@@ -99,7 +109,7 @@
   }
 
   .glassmorphism {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20;
+    @apply bg-white/70 backdrop-blur-lg border border-white/20 dark:bg-black/40 dark:border-white/10;
   }
 
   .text-balance {
@@ -122,19 +132,19 @@
   
   /* Glass Morphism Utilities */
   .glass-morphism {
-    @apply bg-background/60 backdrop-blur-lg border border-white/10 shadow-sm;
+    @apply bg-background/60 backdrop-blur-lg border border-white/10 shadow-sm dark:bg-background/30 dark:border-white/5;
   }
   
   .glass-card {
-    @apply bg-background/40 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:bg-background/60;
+    @apply bg-background/40 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:bg-background/60 dark:border-white/10 dark:hover:bg-background/40;
   }
   
   .glass-input {
-    @apply bg-background/30 backdrop-blur-sm focus:bg-background/50 transition-all duration-200;
+    @apply bg-background/30 backdrop-blur-sm focus:bg-background/50 transition-all duration-200 dark:bg-background/20 dark:focus:bg-background/30;
   }
   
   .glass-button {
-    @apply bg-background/40 backdrop-blur-sm hover:bg-background/60 transition-all duration-200;
+    @apply bg-background/40 backdrop-blur-sm hover:bg-background/60 transition-all duration-200 dark:bg-background/20 dark:hover:bg-background/40;
   }
   
   .glass-primary-button {
@@ -142,7 +152,7 @@
   }
   
   .glass-tabs {
-    @apply bg-background/40 backdrop-blur-sm;
+    @apply bg-background/40 backdrop-blur-sm dark:bg-background/20;
   }
   
   .glass-badge {
@@ -151,11 +161,11 @@
   
   /* Advanced Glass Morphism */
   .glass-deep {
-    @apply bg-background/30 backdrop-blur-md border border-white/30 shadow-lg;
+    @apply bg-background/30 backdrop-blur-md border border-white/30 shadow-lg dark:bg-background/20 dark:border-white/10;
   }
   
   .glass-floating {
-    @apply bg-background/50 backdrop-blur-lg border border-white/30 shadow-xl;
+    @apply bg-background/50 backdrop-blur-lg border border-white/30 shadow-xl dark:bg-background/30 dark:border-white/10;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   }
   
@@ -183,6 +193,45 @@
   
   .glass-card-hover:hover::before {
     left: 100%;
+  }
+
+  /* Card animations */
+  .card-scale {
+    @apply transition-all duration-500 hover:scale-[1.02];
+  }
+  
+  .card-lift {
+    @apply transition-all duration-500 hover:-translate-y-2;
+  }
+  
+  .card-shadow {
+    @apply transition-all duration-500 hover:shadow-xl;
+  }
+  
+  .card-border-glow {
+    @apply transition-all duration-500 hover:border-primary/50;
+  }
+  
+  .card-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: rotate(30deg);
+    animation: shine 5s linear infinite;
   }
 }
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { SearchNotification } from "@/components/ui/search-notification";
 
 interface Capsule {
   id: string;
@@ -135,6 +137,8 @@ const Dashboard = () => {
               </Link>
             </Button>
           </div>
+          
+          <SearchNotification />
           
           <div className="mb-6">
             <Tabs defaultValue="all" onValueChange={setFilter} className="w-full">

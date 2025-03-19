@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, CalendarIcon, File, Image, Trash, Lock, Bell, Users, Star } from "lucide-react";
@@ -13,11 +12,11 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, generateUniqueId } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { generateUniqueId } from "@/lib/utils";
+import { saveCapsule } from "@/lib/storage";
 
 const CapsuleForm = () => {
   const navigate = useNavigate();
@@ -39,6 +38,9 @@ const CapsuleForm = () => {
   const [location, setLocation] = useState("");
   const [tags, setTags] = useState("");
   const [customTheme, setCustomTheme] = useState("default");
+  const [isEncrypted, setIsEncrypted] = useState(false);
+  const [autoDestruct, setAutoDestruct] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -70,6 +72,19 @@ const CapsuleForm = () => {
     setIsSubmitting(true);
     
     try {
+      // Validate required fields
+      if (!title.trim()) {
+        toast.error("Please enter a title for your capsule");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!unlockDate) {
+        toast.error("Please select an unlock date");
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Generate a new unique ID for the capsule
       const capsuleId = generateUniqueId();
       
@@ -90,6 +105,9 @@ const CapsuleForm = () => {
         location,
         tags: tags.split(',').map(tag => tag.trim()),
         customTheme,
+        isEncrypted,
+        autoDestruct,
+        recipientEmail,
         message,
         mediaFiles: previewUrls.map((url, index) => ({
           id: `file-${index}`,
@@ -99,21 +117,22 @@ const CapsuleForm = () => {
         }))
       };
       
-      // In a real app, this would be an API call to save the data to a database
-      // For now, we'll store it in localStorage so it persists between page refreshes
-      const storedCapsules = localStorage.getItem('timeCapsules');
-      const capsules = storedCapsules ? JSON.parse(storedCapsules) : [];
-      capsules.push(newCapsule);
-      localStorage.setItem('timeCapsules', JSON.stringify(capsules));
+      // Save capsule using our storage utility
+      const saved = saveCapsule(newCapsule);
       
-      // Show success message
-      toast.success("Time capsule created successfully!");
-      
-      // Redirect to dashboard
-      setTimeout(() => {
+      if (saved) {
+        // Show success message
+        toast.success("Time capsule created successfully!");
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+          setIsSubmitting(false);
+          navigate("/dashboard");
+        }, 1000);
+      } else {
+        toast.error("Failed to save capsule. Please try again.");
         setIsSubmitting(false);
-        navigate("/dashboard");
-      }, 1000);
+      }
     } catch (error) {
       console.error("Error creating time capsule:", error);
       toast.error("Failed to create time capsule. Please try again.");
@@ -263,6 +282,22 @@ const CapsuleForm = () => {
                 Feature on Timeline
               </Label>
             </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch id="encrypted" checked={isEncrypted} onCheckedChange={setIsEncrypted} />
+              <Label htmlFor="encrypted" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Encrypt Contents
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch id="destruct" checked={autoDestruct} onCheckedChange={setAutoDestruct} />
+              <Label htmlFor="destruct" className="flex items-center gap-2">
+                <Trash className="w-4 h-4" />
+                Auto-Destruct After Opening
+              </Label>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -284,6 +319,18 @@ const CapsuleForm = () => {
                 value={tags}
                 onChange={e => setTags(e.target.value)}
                 placeholder="e.g., graduation, 2023, memories"
+                className="mt-1.5 glass-input"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="recipient">Recipient Email (optional)</Label>
+              <Input
+                id="recipient"
+                type="email"
+                value={recipientEmail}
+                onChange={e => setRecipientEmail(e.target.value)}
+                placeholder="e.g., future.me@example.com"
                 className="mt-1.5 glass-input"
               />
             </div>
