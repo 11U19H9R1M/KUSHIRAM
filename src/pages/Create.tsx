@@ -15,9 +15,9 @@ const Create = () => {
       <main className="flex-1 pt-24 pb-20">
         <div className="container px-4 md:px-6 max-w-4xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Create a New Time Capsule</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Secure Academic Documents</h1>
             <p className="text-muted-foreground mt-2">
-              Fill in the details below to create your digital time capsule. You can add text, photos, and videos.
+              Upload and secure exam papers, academic records, and other sensitive documents until their intended release date.
             </p>
           </div>
           
