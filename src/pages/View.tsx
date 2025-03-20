@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,7 +16,8 @@ import {
   BookOpen,
   University,
   GraduationCap,
-  Eye
+  Eye,
+  Image
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -35,13 +35,18 @@ const ViewCapsule = () => {
   useEffect(() => {
     // Fetch the document
     if (id) {
+      console.log(`Attempting to fetch document with ID: ${id}`);
       const fetchedDocument = getCapsuleById(id);
       
       if (fetchedDocument) {
+        console.log("Document found:", fetchedDocument.title);
         setDocument(fetchedDocument);
         // Check if it's unlockable
-        setIsUnlocked(isDocumentUnlockable(fetchedDocument));
+        const unlockable = isDocumentUnlockable(fetchedDocument);
+        console.log(`Document unlockable status: ${unlockable}`);
+        setIsUnlocked(unlockable);
       } else {
+        console.error(`Document with ID ${id} not found`);
         toast.error("Document not found");
       }
     }
@@ -75,7 +80,6 @@ const ViewCapsule = () => {
     return () => clearInterval(timer);
   }, [document]);
 
-  // For demo purposes, allow manual unlocking
   const handleManualUnlock = () => {
     setIsUnlocked(true);
     toast.success("Document unlocked successfully");
@@ -108,6 +112,18 @@ const ViewCapsule = () => {
       case "personal": return "Student Personal Data";
       default: return "Academic Document";
     }
+  };
+
+  const hasImagesAttached = () => {
+    if (!document || !document.mediaFiles || document.mediaFiles.length === 0) return false;
+    return document.mediaFiles.some((file: any) => file.type === 'image');
+  };
+
+  const getFirstImageUrl = () => {
+    if (!document || !document.mediaFiles) return null;
+    
+    const imageFile = document.mediaFiles.find((file: any) => file.type === 'image');
+    return imageFile ? imageFile.url : null;
   };
 
   if (isLoading) {
@@ -196,6 +212,12 @@ const ViewCapsule = () => {
                     alt={document.title}
                     className="w-full aspect-[16/9] object-cover"
                   />
+                ) : hasImagesAttached() ? (
+                  <img 
+                    src={getFirstImageUrl()} 
+                    alt={document.title}
+                    className="w-full aspect-[16/9] object-cover"
+                  />
                 ) : (
                   <div className="w-full aspect-[16/9] flex items-center justify-center bg-accent/10">
                     {getDocumentTypeIcon()}
@@ -223,7 +245,7 @@ const ViewCapsule = () => {
                                 {file.type === 'pdf' ? (
                                   <FileText className="w-6 h-6 text-primary" />
                                 ) : file.type === 'image' ? (
-                                  <Eye className="w-6 h-6 text-primary" />
+                                  <Image className="w-6 h-6 text-primary" />
                                 ) : (
                                   <FileText className="w-6 h-6 text-primary" />
                                 )}

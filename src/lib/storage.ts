@@ -6,17 +6,51 @@ import { toast } from "sonner";
  */
 export const saveCapsule = (documentData: any): boolean => {
   try {
+    // Ensure we have an ID for the document
+    if (!documentData.id) {
+      console.error("Cannot save document: Missing ID");
+      return false;
+    }
+    
     // Get existing documents
     const existingData = localStorage.getItem('academicDocuments');
     const documents = existingData ? JSON.parse(existingData) : [];
+    
+    // Log the document data we're attempting to save
+    console.log("Attempting to save document:", documentData.id);
+    
+    // Process document images and ensure they are properly stored
+    if (documentData.mediaFiles && documentData.mediaFiles.length > 0) {
+      console.log(`Document has ${documentData.mediaFiles.length} media files`);
+      
+      // Ensure each media file has the correct properties
+      documentData.mediaFiles = documentData.mediaFiles.map((file: any, index: number) => {
+        console.log(`Processing media file ${index}: ${file.name || 'unnamed'}, type: ${file.type || 'unknown'}`);
+        
+        // If file doesn't have a proper type, try to infer it
+        if (!file.type || file.type === 'unknown') {
+          const name = file.name || '';
+          if (name.endsWith('.pdf')) file.type = 'pdf';
+          else if (name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) file.type = 'image';
+          else if (name.match(/\.(mp4|webm|mov)$/i)) file.type = 'video';
+          else file.type = 'document';
+          
+          console.log(`Inferred type for file: ${file.type}`);
+        }
+        
+        return file;
+      });
+    }
     
     // Check if document with this ID already exists
     const existingIndex = documents.findIndex((c: any) => c.id === documentData.id);
     
     if (existingIndex !== -1) {
+      console.log(`Updating existing document at index: ${existingIndex}`);
       // Update existing document
       documents[existingIndex] = documentData;
     } else {
+      console.log("Adding new document to collection");
       // Add new document
       documents.push(documentData);
     }
