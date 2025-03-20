@@ -23,6 +23,10 @@ export const saveCapsule = (documentData: any): boolean => {
     
     // Save back to localStorage
     localStorage.setItem('academicDocuments', JSON.stringify(documents));
+    
+    // Log success message for debugging
+    console.log(`Document saved successfully with ID: ${documentData.id}`);
+    
     return true;
   } catch (error) {
     console.error("Error saving document:", error);
@@ -36,12 +40,25 @@ export const saveCapsule = (documentData: any): boolean => {
 export const getAllCapsules = () => {
   try {
     const data = localStorage.getItem('academicDocuments');
+    
+    // If no data exists in the 'academicDocuments' key
     if (!data) {
-      // If no data exists in the new format, try the old format for backward compatibility
+      console.log("No documents found in 'academicDocuments'");
+      
+      // Try the old format for backward compatibility
       const oldData = localStorage.getItem('timeCapsules');
-      return oldData ? JSON.parse(oldData) : [];
+      if (oldData) {
+        console.log("Found documents in 'timeCapsules'");
+        return JSON.parse(oldData);
+      }
+      
+      console.log("No documents found at all");
+      return [];
     }
-    return JSON.parse(data);
+    
+    const parsedData = JSON.parse(data);
+    console.log(`Found ${parsedData.length} documents in storage`);
+    return parsedData;
   } catch (error) {
     console.error("Error retrieving documents:", error);
     toast.error("Failed to load your academic documents");
@@ -55,7 +72,15 @@ export const getAllCapsules = () => {
 export const getCapsuleById = (id: string) => {
   try {
     const documents = getAllCapsules();
-    return documents.find((doc: any) => doc.id === id) || null;
+    const document = documents.find((doc: any) => doc.id === id);
+    
+    if (document) {
+      console.log(`Found document with ID: ${id}`);
+    } else {
+      console.log(`No document found with ID: ${id}`);
+    }
+    
+    return document || null;
   } catch (error) {
     console.error("Error retrieving document:", error);
     return null;
@@ -70,6 +95,7 @@ export const deleteCapsule = (id: string): boolean => {
     const documents = getAllCapsules();
     const filteredDocuments = documents.filter((doc: any) => doc.id !== id);
     localStorage.setItem('academicDocuments', JSON.stringify(filteredDocuments));
+    console.log(`Document with ID: ${id} deleted successfully`);
     return true;
   } catch (error) {
     console.error("Error deleting document:", error);
@@ -86,7 +112,10 @@ export const isDocumentUnlockable = (document: any): boolean => {
   const unlockDate = new Date(document.unlockDate);
   const now = new Date();
   
-  return now >= unlockDate;
+  const isUnlockable = now >= unlockDate;
+  console.log(`Document unlock check: Current time: ${now.toISOString()}, Unlock date: ${unlockDate.toISOString()}, Is unlockable: ${isUnlockable}`);
+  
+  return isUnlockable;
 };
 
 /**
@@ -153,5 +182,38 @@ export const getDocumentsByType = (documentType: string) => {
   } catch (error) {
     console.error("Error filtering documents by type:", error);
     return [];
+  }
+};
+
+// Debug function to help troubleshoot localStorage issues
+export const debugStorage = () => {
+  try {
+    console.log("--- Storage Debug Information ---");
+    
+    // Log all localStorage keys
+    console.log("All localStorage keys:");
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      console.log(`- ${key}`);
+    }
+    
+    // Check academicDocuments specifically
+    const academicDocs = localStorage.getItem('academicDocuments');
+    console.log("academicDocuments:", academicDocs ? JSON.parse(academicDocs).length + " items" : "null");
+    
+    // Check timeCapsules for backward compatibility
+    const timeCapsules = localStorage.getItem('timeCapsules');
+    console.log("timeCapsules:", timeCapsules ? JSON.parse(timeCapsules).length + " items" : "null");
+    
+    console.log("--- End Debug Information ---");
+    
+    return {
+      academicDocuments: academicDocs ? JSON.parse(academicDocs) : null,
+      timeCapsules: timeCapsules ? JSON.parse(timeCapsules) : null,
+      allKeys: Object.keys(localStorage)
+    };
+  } catch (error) {
+    console.error("Error during storage debugging:", error);
+    return { error: error instanceof Error ? error.message : "Unknown error" };
   }
 };

@@ -72,6 +72,9 @@ const CapsuleCard = ({
     }
   };
   
+  // Log for debugging
+  console.log(`Rendering card for document: ${id}, Title: ${title}, Unlockable: ${isUnlockable}, Date: ${unlockDateObj.toISOString()}`);
+  
   return (
     <Link 
       to={`/capsule/${id}`}

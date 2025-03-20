@@ -4,7 +4,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
 export function SearchNotification() {
-  const [isVisible, setIsVisible] = React.useState(true)
+  // Set to false by default to hide the notification
+  const [isVisible, setIsVisible] = React.useState(false)
 
   if (!isVisible) return null
 
