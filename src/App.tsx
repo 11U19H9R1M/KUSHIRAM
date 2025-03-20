@@ -20,16 +20,18 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      onSettled: (data, error) => {
-        if (error) {
+      // Using meta for error handling which is compatible with latest react-query
+      meta: {
+        onError: (error: Error) => {
           console.error("Query error:", error);
         }
       }
     },
     mutations: {
       retry: 1,
-      onSettled: (data, error) => {
-        if (error) {
+      // Using meta for error handling which is compatible with latest react-query
+      meta: {
+        onError: (error: Error) => {
           console.error("Mutation error:", error);
         }
       }
