@@ -130,6 +130,15 @@
     transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  /* Text Gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-br from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-accent {
+    @apply bg-gradient-to-br from-accent-foreground via-accent-foreground/90 to-accent-foreground/70 bg-clip-text text-transparent;
+  }
+  
   /* Glass Morphism Utilities */
   .glass-morphism {
     @apply bg-background/60 backdrop-blur-lg border border-white/10 shadow-sm dark:bg-background/30 dark:border-white/5;
@@ -305,4 +314,33 @@
   );
   transform: rotate(30deg);
   animation: shine 5s linear infinite;
+}
+
+/* Add new animations */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(var(--primary), 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(var(--primary), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--primary), 0); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Particle animations */
+@keyframes particle-float {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(var(--primary), 0.6);
+  pointer-events: none;
+  animation: particle-float 10s infinite linear;
 }
