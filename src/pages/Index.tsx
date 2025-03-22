@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -9,7 +8,7 @@ import { motion } from "framer-motion";
 import { formatTimeLeft } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Clock, Sparkles, Calendar, Lock } from "lucide-react";
+import { ArrowRight, Clock, Sparkles, Calendar, Lock, FileText } from "lucide-react";
 
 interface Capsule {
   id: string;
