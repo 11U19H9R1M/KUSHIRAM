@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Create from "./pages/Create";
@@ -51,91 +50,15 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Add console logs to help debugging
+// Debug component to help troubleshoot
 const DebugComponent = () => {
   useEffect(() => {
     console.log("App loaded. Running storage debug...");
     // Debug localStorage
     debugStorage();
-    
-    // Additional debug information
-    console.log("Window location:", window.location.href);
-    console.log("React version:", React.version);
   }, []);
 
   return null;
-};
-
-// AnimatedRoutes component to add page transitions
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Index />
-          </motion.div>
-        } />
-        <Route path="/dashboard" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Dashboard />
-          </motion.div>
-        } />
-        <Route path="/create" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Create />
-          </motion.div>
-        } />
-        <Route path="/capsule/:id" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ViewCapsule />
-          </motion.div>
-        } />
-        <Route path="/about" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <About />
-          </motion.div>
-        } />
-        <Route path="*" element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <NotFound />
-          </motion.div>
-        } />
-      </Routes>
-    </AnimatePresence>
-  );
 };
 
 const App = () => (
@@ -147,7 +70,14 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <DebugComponent />
-          <AnimatedRoutes />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/create" element={<Create />} />
+            <Route path="/capsule/:id" element={<ViewCapsule />} />
+            <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
