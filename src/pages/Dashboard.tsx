@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -25,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { SearchNotification } from "@/components/ui/search-notification";
+import { loadDashboardCapsules } from "@/lib/storage";
 
 interface Capsule {
   id: string;
@@ -34,7 +34,7 @@ interface Capsule {
   createdAt: Date | string;
   unlockDate: Date | string;
   isUnlocked: boolean;
-  contributorCount: number;
+  contributorCount?: number;
   [key: string]: any;
 }
 
@@ -46,20 +46,10 @@ const Dashboard = () => {
   const [sortOrder, setSortOrder] = useState("newest");
   
   useEffect(() => {
-    const loadCapsules = () => {
+    const loadCapsulesData = () => {
       try {
-        const storedCapsules = localStorage.getItem('timeCapsules');
-        if (storedCapsules) {
-          const parsedCapsules = JSON.parse(storedCapsules);
-          
-          const formattedCapsules = parsedCapsules.map((capsule: any) => ({
-            ...capsule,
-            createdAt: new Date(capsule.createdAt),
-            unlockDate: new Date(capsule.unlockDate)
-          }));
-          
-          setCapsules(formattedCapsules);
-        }
+        const formattedCapsules = loadDashboardCapsules();
+        setCapsules(formattedCapsules);
       } catch (error) {
         console.error("Error loading capsules:", error);
         toast.error("Failed to load your time capsules");
@@ -68,7 +58,7 @@ const Dashboard = () => {
     };
 
     setTimeout(() => {
-      loadCapsules();
+      loadCapsulesData();
     }, 800);
     
     window.scrollTo(0, 0);

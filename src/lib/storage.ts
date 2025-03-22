@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 /**
@@ -12,7 +11,7 @@ export const saveCapsule = (documentData: any): boolean => {
       return false;
     }
     
-    // Get existing documents
+    // Get existing documents - standardize on academicDocuments key
     const existingData = localStorage.getItem('academicDocuments');
     const documents = existingData ? JSON.parse(existingData) : [];
     
@@ -73,6 +72,7 @@ export const saveCapsule = (documentData: any): boolean => {
  */
 export const getAllCapsules = () => {
   try {
+    // First try to get from academicDocuments (standard key)
     const data = localStorage.getItem('academicDocuments');
     
     // If no data exists in the 'academicDocuments' key
@@ -82,7 +82,9 @@ export const getAllCapsules = () => {
       // Try the old format for backward compatibility
       const oldData = localStorage.getItem('timeCapsules');
       if (oldData) {
-        console.log("Found documents in 'timeCapsules'");
+        console.log("Found documents in 'timeCapsules', migrating to 'academicDocuments'");
+        // Migrate data to new key
+        localStorage.setItem('academicDocuments', oldData);
         return JSON.parse(oldData);
       }
       
@@ -219,7 +221,26 @@ export const getDocumentsByType = (documentType: string) => {
   }
 };
 
-// Debug function to help troubleshoot localStorage issues
+/**
+ * Load dashboard capsules from localStorage
+ */
+export const loadDashboardCapsules = () => {
+  try {
+    const capsules = getAllCapsules();
+    return capsules.map((capsule: any) => ({
+      ...capsule,
+      createdAt: new Date(capsule.createdAt),
+      unlockDate: new Date(capsule.unlockDate)
+    }));
+  } catch (error) {
+    console.error("Error loading dashboard capsules:", error);
+    return [];
+  }
+};
+
+/**
+ * Debug function to help troubleshoot localStorage issues
+ */
 export const debugStorage = () => {
   try {
     console.log("--- Storage Debug Information ---");
@@ -239,6 +260,12 @@ export const debugStorage = () => {
     const timeCapsules = localStorage.getItem('timeCapsules');
     console.log("timeCapsules:", timeCapsules ? JSON.parse(timeCapsules).length + " items" : "null");
     
+    // If we have data in timeCapsules but not in academicDocuments, migrate it
+    if (timeCapsules && !academicDocs) {
+      console.log("Migrating data from timeCapsules to academicDocuments");
+      localStorage.setItem('academicDocuments', timeCapsules);
+    }
+    
     console.log("--- End Debug Information ---");
     
     return {
@@ -251,3 +278,4 @@ export const debugStorage = () => {
     return { error: error instanceof Error ? error.message : "Unknown error" };
   }
 };
+
