@@ -51,6 +51,21 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Add console logs to help debugging
+const DebugComponent = () => {
+  useEffect(() => {
+    console.log("App loaded. Running storage debug...");
+    // Debug localStorage
+    debugStorage();
+    
+    // Additional debug information
+    console.log("Window location:", window.location.href);
+    console.log("React version:", React.version);
+  }, []);
+
+  return null;
+};
+
 // AnimatedRoutes component to add page transitions
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -121,17 +136,6 @@ const AnimatedRoutes = () => {
       </Routes>
     </AnimatePresence>
   );
-};
-
-// Debug component to help troubleshoot
-const DebugComponent = () => {
-  useEffect(() => {
-    console.log("App loaded. Running storage debug...");
-    // Debug localStorage
-    debugStorage();
-  }, []);
-
-  return null;
 };
 
 const App = () => (
