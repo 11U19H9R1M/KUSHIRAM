@@ -12,6 +12,7 @@ import Create from "./pages/Create";
 import ViewCapsule from "./pages/View";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import GraduationMemories from "./pages/GraduationMemories";
 import { debugStorage } from "./lib/storage";
 
 // Configure query client with better error handling
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/create" element={<Create />} />
             <Route path="/capsule/:id" element={<ViewCapsule />} />
             <Route path="/about" element={<About />} />
+            <Route path="/graduation-memories" element={<GraduationMemories />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

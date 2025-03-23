@@ -5,9 +5,13 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Info, Lock, Users, Image, Clock, Code, Database, Palette } from "lucide-react";
+import { 
+  ArrowLeft, Calendar, Info, Lock, Users, Image, Clock, 
+  Code, Database, Palette, GraduationCap, Shield
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import AIMemoryAnalysis from "@/components/AIMemoryAnalysis";
 
 const About = () => {
   useEffect(() => {
@@ -112,7 +116,7 @@ const About = () => {
             <motion.div variants={itemVariants}>
               <h2 className="text-2xl font-semibold mb-6">How It Works</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <Card className="glass-card hover:shadow-lg transition-all-300">
+                <Card className="glass-card hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-primary" />
@@ -124,7 +128,7 @@ const About = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="glass-card hover:shadow-lg transition-all-300">
+                <Card className="glass-card hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Lock className="w-6 h-6 text-primary" />
@@ -136,7 +140,7 @@ const About = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="glass-card hover:shadow-lg transition-all-300">
+                <Card className="glass-card hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Clock className="w-6 h-6 text-primary" />
@@ -148,6 +152,48 @@ const About = () => {
                   </CardContent>
                 </Card>
               </div>
+            </motion.div>
+
+            {/* New Advanced Features Section */}
+            <motion.div variants={itemVariants} className="mb-16">
+              <h2 className="text-2xl font-semibold mb-6 flex items-center">
+                <Shield className="w-6 h-6 mr-2 text-primary" />
+                Advanced Features
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="glass-card hover:shadow-lg transition-all duration-300 border-primary/20">
+                  <CardContent className="p-6">
+                    <div className="mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <GraduationCap className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">Graduation Memories</h3>
+                    <p className="text-muted-foreground mb-4">
+                      A specialized section dedicated to preserving and celebrating your academic achievements and graduation milestones.
+                    </p>
+                    <Button asChild className="glass-button">
+                      <Link to="/graduation-memories">
+                        Explore Graduation Memories
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+                
+                <Card className="glass-card hover:shadow-lg transition-all duration-300 border-primary/20">
+                  <CardContent className="p-6">
+                    <div className="mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">Collaborative Capsules</h3>
+                    <p className="text-muted-foreground">
+                      Create shared capsules with friends, family, or colleagues. Everyone can contribute their memories to create a richer, more complete collection.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="mb-16">
+              <AIMemoryAnalysis />
             </motion.div>
 
             <motion.div variants={itemVariants}>
@@ -229,10 +275,17 @@ const About = () => {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex justify-center mt-12">
+            <motion.div variants={itemVariants} className="flex flex-col md:flex-row gap-4 justify-center mt-12">
               <Button asChild size="lg" className="rounded-full px-8 glass-primary-button">
                 <Link to="/create">
                   Start Creating Your Capsules
+                </Link>
+              </Button>
+              
+              <Button asChild size="lg" variant="outline" className="rounded-full px-8 glass-button">
+                <Link to="/graduation-memories">
+                  <GraduationCap className="mr-2 h-5 w-5" />
+                  Explore Graduation Features
                 </Link>
               </Button>
             </motion.div>
