@@ -5,8 +5,9 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Info, Lock, Users, Image, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, Info, Lock, Users, Image, Clock, Code, Database, Palette } from "lucide-react";
 import { motion } from "framer-motion";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const About = () => {
   useEffect(() => {
@@ -31,6 +32,33 @@ const About = () => {
       transition: { duration: 0.6 }
     }
   };
+
+  const creatorProfiles = [
+    {
+      name: "Kushiram",
+      role: "Owner & UX Developer",
+      bio: "The visionary behind TimeVault, focused on creating intuitive user experiences that make preserving memories a joy.",
+      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80",
+      icon: <Palette className="w-5 h-5" />,
+      color: "bg-purple-500/10 text-purple-500"
+    },
+    {
+      name: "Ram Charan",
+      role: "UI Developer",
+      bio: "Passionate about creating beautiful interfaces that bring TimeVault's features to life with elegance and style.",
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80",
+      icon: <Code className="w-5 h-5" />,
+      color: "bg-blue-500/10 text-blue-500"
+    },
+    {
+      name: "Darshan",
+      role: "Database Handler",
+      bio: "Responsible for ensuring your precious memories are securely stored and efficiently managed in our database systems.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80",
+      icon: <Database className="w-5 h-5" />,
+      color: "bg-green-500/10 text-green-500"
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -150,36 +178,54 @@ const About = () => {
 
             <motion.div variants={itemVariants}>
               <h2 className="text-2xl font-semibold mb-6">Our Creators</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                <div className="glass-morphism p-6 rounded-xl flex flex-col items-center text-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary/20">
-                    <img 
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80" 
-                      alt="Kushiram Ram Charan" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h3 className="text-xl font-semibold">Kushiram Ram Charan</h3>
-                  <p className="text-primary/80 mb-3">Lead Developer & Co-founder</p>
-                  <p className="text-muted-foreground">
-                    Passionate about creating technology that connects people with their memories in meaningful ways.
-                  </p>
-                </div>
-                
-                <div className="glass-morphism p-6 rounded-xl flex flex-col items-center text-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-2 border-primary/20">
-                    <img 
-                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80" 
-                      alt="Darshan" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h3 className="text-xl font-semibold">Darshan</h3>
-                  <p className="text-primary/80 mb-3">UX Designer & Co-founder</p>
-                  <p className="text-muted-foreground">
-                    Focused on creating intuitive and beautiful user experiences that make preserving memories a joy.
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                {creatorProfiles.map((creator, index) => (
+                  <motion.div 
+                    key={creator.name}
+                    className="glass-morphism rounded-xl overflow-hidden"
+                    whileHover={{ 
+                      y: -10,
+                      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                    }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0,
+                      transition: { delay: 0.2 + index * 0.15 }
+                    }}
+                  >
+                    <div className="relative">
+                      <div className="h-48 bg-gradient-to-br from-primary/30 to-primary/10 overflow-hidden">
+                        <motion.div 
+                          className="w-full h-full flex items-center justify-center"
+                          animate={{ 
+                            scale: [1, 1.05, 1],
+                            rotate: [0, 2, 0, -2, 0]
+                          }}
+                          transition={{ 
+                            repeat: Infinity, 
+                            duration: 8 + index * 2,
+                            ease: "easeInOut" 
+                          }}
+                        >
+                          <Avatar className="w-32 h-32 border-4 border-white/20">
+                            <AvatarImage src={creator.image} alt={creator.name} />
+                            <AvatarFallback>{creator.name[0]}</AvatarFallback>
+                          </Avatar>
+                        </motion.div>
+                      </div>
+                      <div className={`absolute top-4 right-4 ${creator.color} rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1`}>
+                        {creator.icon}
+                        {creator.role}
+                      </div>
+                    </div>
+                    <div className="p-6 text-center">
+                      <h3 className="text-xl font-semibold mb-2">{creator.name}</h3>
+                      <p className="text-muted-foreground">{creator.bio}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
 
