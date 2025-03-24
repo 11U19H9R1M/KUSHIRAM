@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCapsuleById, isDocumentUnlockable } from "@/lib/storage";
 import { toast } from "sonner";
-import ReminderDialog from "@/components/ReminderDialog";
 
 const ViewCapsule = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +33,7 @@ const ViewCapsule = () => {
   const [document, setDocument] = useState<any>(null);
   
   useEffect(() => {
+    // Fetch the document
     if (id) {
       console.log(`Attempting to fetch document with ID: ${id}`);
       const fetchedDocument = getCapsuleById(id);
@@ -41,6 +41,7 @@ const ViewCapsule = () => {
       if (fetchedDocument) {
         console.log("Document found:", fetchedDocument.title);
         setDocument(fetchedDocument);
+        // Check if it's unlockable
         const unlockable = isDocumentUnlockable(fetchedDocument);
         console.log(`Document unlockable status: ${unlockable}`);
         setIsUnlocked(unlockable);
@@ -60,6 +61,7 @@ const ViewCapsule = () => {
   useEffect(() => {
     if (!document) return;
     
+    // Check if the document should be unlocked
     const checkUnlockStatus = () => {
       const now = new Date();
       const unlockDate = new Date(document.unlockDate);
@@ -67,12 +69,13 @@ const ViewCapsule = () => {
       if (now >= unlockDate) {
         setIsUnlocked(true);
       } else {
+        // Update countdown
         setCountdown(formatDistanceToNow(unlockDate, { addSuffix: true }));
       }
     };
     
     checkUnlockStatus();
-    const timer = setInterval(checkUnlockStatus, 60000);
+    const timer = setInterval(checkUnlockStatus, 60000); // Update every minute
     
     return () => clearInterval(timer);
   }, [document]);
@@ -333,14 +336,9 @@ const ViewCapsule = () => {
                     <Button onClick={handleManualUnlock}>
                       Unlock Now
                     </Button>
-                    <ReminderDialog 
-                      documentTitle={document.title} 
-                      unlockDate={new Date(document.unlockDate)}
-                    >
-                      <Button variant="outline">
-                        Set Reminder
-                      </Button>
-                    </ReminderDialog>
+                    <Button variant="outline">
+                      Set Reminder
+                    </Button>
                   </div>
                 </div>
               )}
