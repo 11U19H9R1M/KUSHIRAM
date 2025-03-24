@@ -153,6 +153,26 @@
   .theme-transition-border {
     @apply transition-colors duration-300;
   }
+
+  /* Added soft pulse animation for lock icon */
+  .animate-soft-pulse {
+    animation: soft-pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes soft-pulse {
+    0% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    100% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+  }
 }
 
 /* Scrollbar styling */

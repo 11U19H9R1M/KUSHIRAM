@@ -246,7 +246,7 @@ const About = () => {
                         <motion.div 
                           className="w-full h-full flex items-center justify-center"
                           animate={{ 
-                            scale: [1, 1.05, 1],
+                            scale: [1, 1.15, 1], // Increased zoom effect from 1.05 to 1.15
                             rotate: [0, 2, 0, -2, 0]
                           }}
                           transition={{ 

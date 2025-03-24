@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import ReminderDialog from "@/components/ReminderDialog";
 import { 
   Calendar, 
   ChevronLeft, 
@@ -33,7 +34,6 @@ const ViewCapsule = () => {
   const [document, setDocument] = useState<any>(null);
   
   useEffect(() => {
-    // Fetch the document
     if (id) {
       console.log(`Attempting to fetch document with ID: ${id}`);
       const fetchedDocument = getCapsuleById(id);
@@ -41,7 +41,6 @@ const ViewCapsule = () => {
       if (fetchedDocument) {
         console.log("Document found:", fetchedDocument.title);
         setDocument(fetchedDocument);
-        // Check if it's unlockable
         const unlockable = isDocumentUnlockable(fetchedDocument);
         console.log(`Document unlockable status: ${unlockable}`);
         setIsUnlocked(unlockable);
@@ -61,7 +60,6 @@ const ViewCapsule = () => {
   useEffect(() => {
     if (!document) return;
     
-    // Check if the document should be unlocked
     const checkUnlockStatus = () => {
       const now = new Date();
       const unlockDate = new Date(document.unlockDate);
@@ -69,13 +67,12 @@ const ViewCapsule = () => {
       if (now >= unlockDate) {
         setIsUnlocked(true);
       } else {
-        // Update countdown
         setCountdown(formatDistanceToNow(unlockDate, { addSuffix: true }));
       }
     };
     
     checkUnlockStatus();
-    const timer = setInterval(checkUnlockStatus, 60000); // Update every minute
+    const timer = setInterval(checkUnlockStatus, 60000);
     
     return () => clearInterval(timer);
   }, [document]);
@@ -336,9 +333,11 @@ const ViewCapsule = () => {
                     <Button onClick={handleManualUnlock}>
                       Unlock Now
                     </Button>
-                    <Button variant="outline">
-                      Set Reminder
-                    </Button>
+                    <ReminderDialog unlockDate={new Date(document.unlockDate)}>
+                      <Button variant="outline">
+                        Set Reminder
+                      </Button>
+                    </ReminderDialog>
                   </div>
                 </div>
               )}
