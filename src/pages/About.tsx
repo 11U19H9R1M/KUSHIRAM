@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AIMemoryAnalysis from "@/components/AIMemoryAnalysis";
+import { toast } from "sonner";
 
 const About = () => {
   useEffect(() => {
@@ -63,6 +64,11 @@ const About = () => {
       color: "bg-green-500/10 text-green-500"
     }
   ];
+
+  // Function to handle reminder setting
+  const handleSetReminder = () => {
+    toast.success("Reminder set successfully. You'll be notified when the document is released.");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -255,10 +261,17 @@ const About = () => {
                             ease: "easeInOut" 
                           }}
                         >
-                          <Avatar className="w-32 h-32 border-4 border-white/20">
-                            <AvatarImage src={creator.image} alt={creator.name} />
-                            <AvatarFallback>{creator.name[0]}</AvatarFallback>
-                          </Avatar>
+                          <motion.div
+                            whileHover={{ scale: 1.2 }}
+                            transition={{ duration: 0.5 }}
+                            className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-lg"
+                          >
+                            <img 
+                              src={creator.image} 
+                              alt={creator.name} 
+                              className="w-full h-full object-cover"
+                            />
+                          </motion.div>
                         </motion.div>
                       </div>
                       <div className={`absolute top-4 right-4 ${creator.color} rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1`}>
