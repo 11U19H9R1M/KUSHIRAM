@@ -2,8 +2,45 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const TextLoadingAnimation = ({ text }: { text: string }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayedText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, 100); // Speed of typing animation
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsComplete(true);
+    }
+  }, [currentIndex, text]);
+
+  return (
+    <span className={`relative ${!isComplete ? "after:content-[''] after:inline-block after:w-1 after:h-6 after:bg-primary after:ml-1 after:animate-pulse" : ""}`}>
+      {displayedText}
+    </span>
+  );
+};
 
 const Hero = () => {
+  const [animationStarted, setAnimationStarted] = useState(false);
+  
+  useEffect(() => {
+    // Small delay before starting the animation
+    const timer = setTimeout(() => {
+      setAnimationStarted(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="relative pt-28 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -20,8 +57,17 @@ const Hero = () => {
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight md:leading-tight lg:leading-tight animate-fade-up">
-            Your memories, <br className="hidden sm:block" /> 
-            <span className="text-primary">sealed in time</span>
+            {animationStarted ? (
+              <>
+                Digital <TextLoadingAnimation text="Time Capsules" />, <br className="hidden sm:block" /> 
+                <span className="text-primary">for Future Discoveries</span>
+              </>
+            ) : (
+              <>
+                Digital Time Capsules, <br className="hidden sm:block" /> 
+                <span className="text-primary">for Future Discoveries</span>
+              </>
+            )}
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4 md:mt-6 animate-fade-up [animation-delay:200ms]">
