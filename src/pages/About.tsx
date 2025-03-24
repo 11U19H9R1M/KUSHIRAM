@@ -42,7 +42,7 @@ const About = () => {
       name: "Kushiram",
       role: "Owner & UX Developer",
       bio: "The visionary behind TimeVault, focused on creating intuitive user experiences that make preserving memories a joy.",
-      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80",
+      image: "/lovable-uploads/a27a29e1-0949-4ad3-8653-914fa6912651.png",
       icon: <Palette className="w-5 h-5" />,
       color: "bg-purple-500/10 text-purple-500"
     },
