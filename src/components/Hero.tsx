@@ -23,7 +23,7 @@ const TextLoadingAnimation = ({ text }: { text: string }) => {
   }, [currentIndex, text]);
 
   return (
-    <span className={`relative ${!isComplete ? "after:content-[''] after:inline-block after:w-1 after:h-6 after:bg-primary after:ml-1 after:animate-pulse" : ""}`}>
+    <span className={`relative glassmorphism px-2 py-1 ${!isComplete ? "after:content-[''] after:inline-block after:w-1 after:h-6 after:bg-primary after:ml-1 after:animate-pulse" : ""}`}>
       {displayedText}
     </span>
   );
@@ -104,10 +104,10 @@ const Hero = () => {
           <h3 className="text-lg font-medium">Graduation Memories 2023</h3>
           <p className="text-sm text-muted-foreground mt-1">Unlocks on: May 15, 2028</p>
           <div className="flex items-center gap-2 mt-3">
-            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">JD</div>
-            <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs">AS</div>
-            <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs">MK</div>
-            <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs">+2</div>
+            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform duration-300">JD</div>
+            <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform duration-300">AS</div>
+            <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform duration-300">MK</div>
+            <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform duration-300">+2</div>
           </div>
         </div>
       </div>
