@@ -4,6 +4,7 @@ import { Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TimelineEvent {
   date: Date | string;
@@ -19,6 +20,7 @@ interface InteractiveTimelineProps {
 
 const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const isMobile = useIsMobile();
   
   const handleNext = () => {
     setActiveIndex((prev) => Math.min(prev + 1, events.length - 1));
@@ -85,8 +87,8 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
   };
   
   return (
-    <div className="glassmorphism rounded-xl p-6 shadow-lg">
-      <h3 className="text-lg font-medium mb-6 flex items-center">
+    <div className="glassmorphism rounded-xl p-4 md:p-6 shadow-lg">
+      <h3 className="text-lg font-medium mb-4 md:mb-6 flex items-center">
         <Clock className="h-5 w-5 mr-2 text-primary" />
         Capsule Timeline
       </h3>
@@ -102,15 +104,16 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
           />
         </div>
         
-        {/* Timeline dots */}
-        <div className="flex justify-between relative mb-12">
+        {/* Timeline dots - smaller on mobile */}
+        <div className={`flex justify-between relative ${isMobile ? 'mb-8' : 'mb-12'}`}>
           {timelineEvents.map((event, index) => (
             <Button
               key={index}
               variant="ghost"
               size="sm"
               className={cn(
-                "z-10 rounded-full w-8 h-8 p-0 transition-all duration-300",
+                "z-10 rounded-full transition-all duration-300",
+                isMobile ? "w-6 h-6 p-0" : "w-8 h-8 p-0", 
                 index === activeIndex ? "scale-125 shadow-lg" : "",
                 event.completed ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               )}
@@ -122,19 +125,19 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
           ))}
         </div>
         
-        {/* Event details */}
-        <div className="bg-background/50 rounded-lg p-6 backdrop-blur-sm border border-border min-h-[150px]">
-          <div className="flex items-center justify-between mb-4">
+        {/* Event details - adjust padding for mobile */}
+        <div className="bg-background/50 rounded-lg p-4 md:p-6 backdrop-blur-sm border border-border min-h-[120px] md:min-h-[150px]">
+          <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-2 md:gap-4 mb-3 md:mb-4">
             <div>
-              <h4 className="font-medium">{currentEvent.title}</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="font-medium text-base md:text-lg">{currentEvent.title}</h4>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 {formatDate(currentEvent.date)}
               </p>
             </div>
             <Badge 
               variant={currentEvent.completed ? "default" : "outline"}
               className={cn(
-                "capitalize",
+                "capitalize text-xs md:text-sm ml-auto md:ml-0",
                 currentEvent.completed ? "bg-green-600/20 text-green-600" : ""
               )}
             >
@@ -142,26 +145,28 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
             </Badge>
           </div>
           
-          <p className="text-sm">{currentEvent.description}</p>
+          <p className="text-xs md:text-sm">{currentEvent.description}</p>
           
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between mt-4 md:mt-6">
             <Button
               variant="ghost"
-              size="sm"
+              size={isMobile ? "sm" : "default"}
+              className="text-xs md:text-sm h-8 md:h-10"
               onClick={handlePrev}
               disabled={activeIndex === 0}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              Prev
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size={isMobile ? "sm" : "default"}
+              className="text-xs md:text-sm h-8 md:h-10"
               onClick={handleNext}
               disabled={activeIndex === timelineEvents.length - 1}
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
             </Button>
           </div>
         </div>
