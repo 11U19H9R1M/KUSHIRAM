@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CapsuleForm from "@/components/CapsuleForm";
 import InteractiveTimeline from "@/components/InteractiveTimeline";
+import { Button } from "@/components/ui/button";
 
 const Create = () => {
   useEffect(() => {
