@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface TimelineEvent {
-  date: string;
+  date: Date | string;
   title: string;
   description?: string;
-  type: 'creation' | 'milestone' | 'unlock';
-  completed: boolean;
+  type?: 'creation' | 'milestone' | 'unlock';
+  completed?: boolean;
 }
 
 interface InteractiveTimelineProps {
@@ -63,8 +63,8 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
   const currentEvent = timelineEvents[activeIndex];
   
   // Format date to display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -73,7 +73,7 @@ const InteractiveTimeline = ({ events = [] }: InteractiveTimelineProps) => {
   };
   
   // Get icon based on event type
-  const getEventIcon = (type: string) => {
+  const getEventIcon = (type: string = 'milestone') => {
     switch (type) {
       case 'creation':
         return <Calendar className="h-5 w-5" />;
