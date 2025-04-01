@@ -75,21 +75,21 @@ const Hero = () => {
             Lock them away and rediscover them exactly when you want in the future.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 mt-8 animate-fade-up [animation-delay:400ms]">
-            <Button asChild size="lg" className="rounded-full px-8">
+          <div className="flex flex-col sm:flex-row gap-4 mt-8 animate-fade-up [animation-delay:400ms] w-full sm:w-auto">
+            <Button asChild size="lg" className="rounded-full px-8 w-full sm:w-auto">
               <Link to="/create">
                 Create Your First Capsule
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="rounded-full px-8">
+            <Button asChild variant="outline" size="lg" className="rounded-full px-8 w-full sm:w-auto">
               <Link to="/about">Learn More</Link>
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="relative mt-16 md:mt-24 max-w-5xl mx-auto animate-fade-up [animation-delay:600ms]">
+      <div className="relative mt-16 md:mt-24 max-w-5xl mx-auto animate-fade-up [animation-delay:600ms] px-4 md:px-0">
         <div className="aspect-[16/9] rounded-xl overflow-hidden border border-border shadow-xl">
           <div className="w-full h-full bg-secondary/50 flex items-center justify-center">
             <img 
@@ -100,7 +100,7 @@ const Hero = () => {
             />
           </div>
         </div>
-        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 glassmorphism rounded-xl p-6 max-w-md w-full shadow-lg">
+        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 glassmorphism rounded-xl p-4 sm:p-6 max-w-md w-[95%] sm:w-full shadow-lg">
           <h3 className="text-lg font-medium">Graduation Memories 2023</h3>
           <p className="text-sm text-muted-foreground mt-1">Unlocks on: May 15, 2028</p>
           <div className="flex items-center gap-2 mt-3">
