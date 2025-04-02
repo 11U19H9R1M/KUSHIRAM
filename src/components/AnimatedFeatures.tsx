@@ -20,7 +20,7 @@ const FeatureCard = ({ icon, title, description, delay }: FeatureCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: delay * 0.1 }}
-      whileHover={{ scale: 1.02, y: -5 }}
+      whileHover={{ scale: isMobile ? 1 : 1.02, y: isMobile ? 0 : -5 }}
       className="h-full"
     >
       <div 
@@ -49,7 +49,7 @@ const FeatureCard = ({ icon, title, description, delay }: FeatureCardProps) => {
 
 const AnimatedFeatures = () => {
   return (
-    <section className="py-12 md:py-20 lg:py-32 bg-secondary/30">
+    <section className="py-12 md:py-20 lg:py-24 bg-secondary/30">
       <div className="container px-4 md:px-6">
         <motion.div 
           className="text-center max-w-3xl mx-auto mb-10 md:mb-16"

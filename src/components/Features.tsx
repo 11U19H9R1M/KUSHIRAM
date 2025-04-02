@@ -12,7 +12,7 @@ const Feature = ({ icon, title, description }: FeatureProps) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="p-4 md:p-6 rounded-xl border border-border bg-card hover:bg-card/80 transition-all-200 hover:shadow-md">
+    <div className="p-4 md:p-6 rounded-xl border border-border bg-card hover:bg-card/80 transition-all duration-200 hover:shadow-md">
       <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 md:mb-4">
         {icon}
       </div>
@@ -24,7 +24,7 @@ const Feature = ({ icon, title, description }: FeatureProps) => {
 
 const Features = () => {
   return (
-    <section className="py-12 md:py-20 lg:py-32 bg-secondary/30">
+    <section className="py-12 md:py-16 lg:py-24 bg-secondary/30">
       <div className="container px-4 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-10 md:mb-16">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">Preserve What Matters</h2>
