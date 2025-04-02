@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,10 +16,21 @@ import {
   Lightbulb, 
   Clock, 
   ArrowRight,
-  CalendarClock
+  CalendarClock,
+  FileText,
+  Lock,
+  Tag,
+  Search,
+  BarChart,
+  RefreshCw,
+  Globe,
+  Check,
+  Code,
+  Image,
+  AlertTriangle
 } from "lucide-react";
+import EnhancementTabs from "@/components/EnhancementTabs";
 
-// Project title and advanced features implementation
 const Create = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("create");
@@ -153,64 +163,7 @@ const Create = () => {
             </TabsContent>
             
             <TabsContent value="enhance" className="mt-0">
-              <Card className="glass-morphism border-white/20 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2 text-primary" />
-                    AI-Powered Document Enhancement
-                  </CardTitle>
-                  <CardDescription>
-                    Use artificial intelligence to analyze and enhance your academic documents
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Content Analysis</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Our AI can analyze your document's content for clarity, accuracy, and completeness.
-                        It provides recommendations to improve document quality.
-                      </p>
-                      <Button className="w-full sm:w-auto">
-                        Analyze Content
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Plagiarism Detection</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Verify the originality of your academic documents with our advanced
-                        AI-powered plagiarism detection system.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="secondary">
-                        Check Originality
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Auto-Tagging</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Let our AI analyze your document and suggest appropriate tags
-                        based on the content and context.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="outline">
-                        Generate Smart Tags
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Format Optimization</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Our AI can optimize document formatting for better readability
-                        and accessibility across different devices.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="outline">
-                        Optimize Format
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <EnhancementTabs />
             </TabsContent>
             
             <TabsContent value="schedule" className="mt-0">
