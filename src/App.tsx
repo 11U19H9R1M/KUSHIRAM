@@ -93,6 +93,29 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Component to handle public routes - redirects to login if not authenticated
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If authenticated, show the content
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -116,14 +139,18 @@ const App = () => (
                 </AuthGuard>
               } />
               
-              {/* Public About Page */}
-              <Route path="/about" element={<About />} />
+              {/* Public About Page - Now requires authentication */}
+              <Route path="/about" element={
+                <PublicRoute>
+                  <About />
+                </PublicRoute>
+              } />
               
               {/* Home Route - Redirect to login if not authenticated */}
               <Route path="/" element={
-                <ProtectedRoute>
+                <PublicRoute>
                   <Index />
-                </ProtectedRoute>
+                </PublicRoute>
               } />
               
               {/* Protected Routes */}
@@ -147,6 +174,7 @@ const App = () => (
                   <GraduationMemories />
                 </ProtectedRoute>
               } />
+              {/* 404 Page - Accessible without login */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
