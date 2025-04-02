@@ -1,7 +1,6 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarIcon, FileText, BookOpen, Trash, Lock, Bell, Users, Star, GraduationCap, FileUp, University } from "lucide-react";
+import { Calendar, CalendarIcon, FileText, BookOpen, Trash, Lock, Bell, Users, Star, GraduationCap, FileUp, University, Search, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import SmartTags from "@/components/SmartTags";
 import AIContentAnalysis from "@/components/AIContentAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PlagiarismDetector from "@/components/PlagiarismDetector";
 
 const CapsuleForm = () => {
   const navigate = useNavigate();
@@ -42,22 +42,8 @@ const CapsuleForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
   
-  // Academic specific fields
-  const [documentType, setDocumentType] = useState("examPaper");
-  const [courseCode, setCourseCode] = useState("");
-  const [department, setDepartment] = useState("");
-  const [semester, setSemester] = useState("");
-  const [academicYear, setAcademicYear] = useState("");
-  const [learningObjectives, setLearningObjectives] = useState("");
-  
-  // Security options
-  const [isConfidential, setIsConfidential] = useState(true);
-  const [restrictedAccess, setRestrictedAccess] = useState(true);
-  const [sendNotifications, setSendNotifications] = useState(true);
-  const [watermark, setWatermark] = useState(true);
-  const [autoExpire, setAutoExpire] = useState(true);
-  const [authorizedRoles, setAuthorizedRoles] = useState<string[]>(["examController", "faculty"]);
-  const [tags, setTags] = useState<string[]>([]);
+  const [isDuplicateFile, setIsDuplicateFile] = useState(false);
+  const [duplicateFileNames, setDuplicateFileNames] = useState<string[]>([]);
 
   const documentTypes = [
     { value: "examPaper", label: "Exam Question Paper" },
@@ -75,11 +61,38 @@ const CapsuleForm = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      setFiles([...files, ...newFiles]);
       
-      // Create preview URLs for the files
-      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
-      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+      const duplicates: string[] = [];
+      const existingFileMap = new Map(files.map(f => [`${f.name}-${f.size}`, f.name]));
+      
+      newFiles.forEach(file => {
+        const fileKey = `${file.name}-${file.size}`;
+        if (existingFileMap.has(fileKey)) {
+          duplicates.push(file.name);
+        }
+      });
+      
+      if (duplicates.length > 0) {
+        const uniqueFiles = newFiles.filter(file => 
+          !duplicates.includes(file.name) || !existingFileMap.has(`${file.name}-${file.size}`)
+        );
+        
+        setFiles([...files, ...uniqueFiles]);
+        setDuplicateFileNames(duplicates);
+        setIsDuplicateFile(true);
+        
+        const newPreviewUrls = uniqueFiles.map(file => URL.createObjectURL(file));
+        setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+        
+        toast.warning(`Duplicate file(s) detected: ${duplicates.join(", ")}`, {
+          description: "These files have already been uploaded."
+        });
+      } else {
+        setFiles([...files, ...newFiles]);
+        
+        const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+        setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+      }
     }
   };
 
@@ -87,7 +100,6 @@ const CapsuleForm = () => {
     const newFiles = [...files];
     const newPreviewUrls = [...previewUrls];
     
-    // Revoke the object URL to avoid memory leaks
     URL.revokeObjectURL(newPreviewUrls[index]);
     
     newFiles.splice(index, 1);
@@ -109,12 +121,20 @@ const CapsuleForm = () => {
     setTags(newTags);
   };
 
+  const handlePlagiarismResult = (result: {isDuplicate: boolean, similarity: number, fileName: string}) => {
+    if (result.isDuplicate) {
+      toast.warning(`High similarity detected in "${result.fileName}"`, {
+        description: `This file has ${result.similarity.toFixed(0)}% similarity with existing documents.`,
+        duration: 5000,
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Validate required fields
       if (!title.trim()) {
         toast.error("Please enter a title for your document");
         setIsSubmitting(false);
@@ -133,10 +153,19 @@ const CapsuleForm = () => {
         return;
       }
       
-      // Generate a new unique ID for the document
+      if (isDuplicateFile) {
+        const shouldContinue = window.confirm(
+          `Warning: Duplicate file(s) detected: ${duplicateFileNames.join(", ")}. Do you still want to continue?`
+        );
+        
+        if (!shouldContinue) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
       const documentId = generateUniqueId();
       
-      // Create a new document object
       const newDocument = {
         id: documentId,
         title,
@@ -145,14 +174,12 @@ const CapsuleForm = () => {
         createdAt: new Date(),
         unlockDate: unlockDate || new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
         isUnlocked: false,
-        // Academic specific fields
         documentType,
         courseCode,
         department,
         semester,
         academicYear,
         learningObjectives,
-        // Security options
         isConfidential,
         restrictedAccess,
         sendNotifications,
@@ -171,14 +198,11 @@ const CapsuleForm = () => {
         }))
       };
       
-      // Save document using our storage utility
       const saved = saveCapsule(newDocument);
       
       if (saved) {
-        // Show success message
         toast.success("Academic document secured successfully!");
         
-        // Redirect to dashboard
         setTimeout(() => {
           setIsSubmitting(false);
           navigate("/dashboard");
@@ -265,7 +289,6 @@ const CapsuleForm = () => {
             </div>
           </div>
           
-          {/* Document Upload */}
           <div>
             <Label className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -283,6 +306,11 @@ const CapsuleForm = () => {
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full p-4">
+                        {isDuplicateFile && duplicateFileNames.includes(files[index].name) && (
+                          <div className="absolute top-2 right-2 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-full p-1.5">
+                            <AlertTriangle className="w-4 h-4" />
+                          </div>
+                        )}
                         <FileText className="w-16 h-16 text-primary/60 mb-2" />
                         <p className="text-sm font-medium text-center break-all">{files[index].name}</p>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -320,6 +348,15 @@ const CapsuleForm = () => {
                 </div>
               </label>
             </div>
+            
+            {files.length > 0 && (
+              <div className="mt-4">
+                <PlagiarismDetector 
+                  files={files} 
+                  onPlagiarismDetected={handlePlagiarismResult}
+                />
+              </div>
+            )}
           </div>
           
           <div>
