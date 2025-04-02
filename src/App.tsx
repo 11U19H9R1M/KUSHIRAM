@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 
 // Pages
@@ -69,6 +69,30 @@ const DebugComponent = () => {
   return null;
 };
 
+// Auth Guard component that redirects authenticated users away from login/signup pages
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is already authenticated and tries to access login/signup pages,
+  // redirect them to dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // If not authenticated, allow access to login/signup pages
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -80,11 +104,27 @@ const App = () => (
             <ScrollToTop />
             <DebugComponent />
             <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/" element={<Index />} />
+              {/* Authentication Routes - Only for non-authenticated users */}
+              <Route path="/login" element={
+                <AuthGuard>
+                  <Login />
+                </AuthGuard>
+              } />
+              <Route path="/signup" element={
+                <AuthGuard>
+                  <Signup />
+                </AuthGuard>
+              } />
+              
+              {/* Public About Page */}
               <Route path="/about" element={<About />} />
+              
+              {/* Home Route - Redirect to login if not authenticated */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={
@@ -117,4 +157,5 @@ const App = () => (
 );
 
 import { useEffect } from "react";
+import { useAuth } from "./contexts/AuthContext";
 export default App;
