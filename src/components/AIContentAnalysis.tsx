@@ -328,16 +328,15 @@ const AIContentAnalysis = ({ content, title = "Content", mediaCount = 0 }: AICon
               </Button>
             </div>
             
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="md:hidden"
-              >
-                {isCollapsed ? 'Expand' : 'Collapse'}
-              </Button>
-            </CollapsibleTrigger>
+            {/* The issue is here - CollapsibleTrigger must be inside a Collapsible component */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="md:hidden"
+            >
+              {isCollapsed ? 'Expand' : 'Collapse'}
+            </Button>
           </div>
         )}
       </div>
@@ -355,7 +354,7 @@ const AIContentAnalysis = ({ content, title = "Content", mediaCount = 0 }: AICon
       )}
       
       {analyzed && (
-        <Collapsible open={!isCollapsed}>
+        <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
           <CollapsibleContent>
             <Tabs defaultValue="content-analysis" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList className="w-full justify-start mb-4 overflow-x-auto flex-nowrap glass-morphism">
@@ -784,6 +783,15 @@ const AIContentAnalysis = ({ content, title = "Content", mediaCount = 0 }: AICon
               </div>
             </div>
           </CollapsibleContent>
+          
+          {/* Add CollapsibleTrigger for mobile */}
+          <div className="md:hidden mt-2">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full">
+                {isCollapsed ? 'Show Details' : 'Hide Details'}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
         </Collapsible>
       )}
       
