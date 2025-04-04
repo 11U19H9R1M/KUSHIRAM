@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -122,7 +123,7 @@ const Create = () => {
                     <CardContent>
                       <SmartTags 
                         onChange={(tags) => setSelectedTags(tags)} 
-                        initialTags={[]}
+                        initialTags={selectedTags}
                         suggestedTags={[
                           "Midterm", "Final Exam", "Project", "Assignment", "Notes",
                           "Computer Science", "Mathematics", "Physics", "Chemistry",
