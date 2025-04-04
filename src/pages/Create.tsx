@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -38,6 +39,11 @@ const Create = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Handle tag changes
+  const handleTagsChange = (tags: string[]) => {
+    setSelectedTags(tags);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -121,7 +127,7 @@ const Create = () => {
                     </CardHeader>
                     <CardContent>
                       <SmartTags 
-                        onChange={(tags) => setSelectedTags(tags)} 
+                        onChange={handleTagsChange} 
                         initialTags={selectedTags}
                         suggestedTags={[
                           "Midterm", "Final Exam", "Project", "Assignment", "Notes",
