@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, CalendarIcon, FileText, BookOpen, Trash, Lock, Bell, Users, Star, GraduationCap, FileUp, University, Search, AlertTriangle } from "lucide-react";
@@ -44,6 +45,21 @@ const CapsuleForm = () => {
   
   const [isDuplicateFile, setIsDuplicateFile] = useState(false);
   const [duplicateFileNames, setDuplicateFileNames] = useState<string[]>([]);
+  
+  // Added missing state variables
+  const [documentType, setDocumentType] = useState("examPaper");
+  const [courseCode, setCourseCode] = useState("");
+  const [department, setDepartment] = useState("");
+  const [semester, setSemester] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
+  const [learningObjectives, setLearningObjectives] = useState("");
+  const [isConfidential, setIsConfidential] = useState(false);
+  const [restrictedAccess, setRestrictedAccess] = useState(false);
+  const [sendNotifications, setSendNotifications] = useState(false);
+  const [watermark, setWatermark] = useState(false);
+  const [autoExpire, setAutoExpire] = useState(false);
+  const [authorizedRoles, setAuthorizedRoles] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   const documentTypes = [
     { value: "examPaper", label: "Exam Question Paper" },
