@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -36,4 +35,67 @@ export function formatTimeLeft(date: Date | string): string {
   } else {
     return `${minutes} minutes left`;
   }
+}
+
+/**
+ * Returns a className conditional that includes responsive classes
+ * Example: getResponsiveClasses('text-base', 'md:text-xl', 'lg:text-2xl')
+ */
+export function getResponsiveClasses(...classes: string[]): string {
+  return classes.filter(Boolean).join(' ');
+}
+
+/**
+ * Creates responsive padding based on screen size
+ */
+export function getResponsivePadding(
+  base: string = 'p-4', 
+  sm: string = 'sm:p-6', 
+  md: string = 'md:p-8', 
+  lg: string = 'lg:p-10'
+): string {
+  return `${base} ${sm} ${md} ${lg}`;
+}
+
+/**
+ * Gets responsive font sizes
+ */
+export function getResponsiveText(
+  size: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
+): string {
+  const sizes = {
+    xs: 'text-xs sm:text-xs',
+    sm: 'text-xs sm:text-sm',
+    base: 'text-sm sm:text-base',
+    lg: 'text-base sm:text-lg',
+    xl: 'text-lg sm:text-xl md:text-xl',
+    '2xl': 'text-xl sm:text-2xl md:text-2xl',
+    '3xl': 'text-2xl sm:text-3xl md:text-3xl',
+    '4xl': 'text-3xl sm:text-4xl md:text-4xl',
+  };
+  
+  return sizes[size] || sizes.base;
+}
+
+/**
+ * Creates a responsive grid with automatic column sizing
+ */
+export function getResponsiveGrid(
+  cols: { base?: number; sm?: number; md?: number; lg?: number; xl?: number } = {}
+): string {
+  const { base = 1, sm = 2, md = 3, lg = 4, xl = 4 } = cols;
+  
+  return `grid grid-cols-${base} sm:grid-cols-${sm} md:grid-cols-${md} lg:grid-cols-${lg} xl:grid-cols-${xl} gap-4 md:gap-6`;
+}
+
+/**
+ * Creates a container with responsive max width
+ */
+export function getResponsiveContainer(
+  centered: boolean = true,
+  withPadding: boolean = true
+): string {
+  return `w-full mx-${centered ? 'auto' : '0'} ${
+    withPadding ? 'px-4 sm:px-6 md:px-8' : ''
+  } max-w-7xl`;
 }
