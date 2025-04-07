@@ -1,7 +1,14 @@
 import { toast } from "sonner";
 
 /**
- * Save document data to localStorage
+ * Gets the current user prefix for storage
+ */
+const getCurrentUserPrefix = (): string => {
+  return localStorage.getItem("currentUserPrefix") || "";
+};
+
+/**
+ * Save document data to localStorage with user prefix
  */
 export const saveCapsule = (documentData: any): boolean => {
   try {
@@ -11,12 +18,14 @@ export const saveCapsule = (documentData: any): boolean => {
       return false;
     }
     
-    // Get existing documents - standardize on academicDocuments key
-    const existingData = localStorage.getItem('academicDocuments');
+    const userPrefix = getCurrentUserPrefix();
+    
+    // Get existing documents - with user prefix
+    const existingData = localStorage.getItem(`${userPrefix}academicDocuments`);
     const documents = existingData ? JSON.parse(existingData) : [];
     
     // Log the document data we're attempting to save
-    console.log("Attempting to save document:", documentData.id);
+    console.log("Attempting to save document:", documentData.id, "for user prefix:", userPrefix);
     
     // Process document images and ensure they are properly stored
     if (documentData.mediaFiles && documentData.mediaFiles.length > 0) {
@@ -54,11 +63,11 @@ export const saveCapsule = (documentData: any): boolean => {
       documents.push(documentData);
     }
     
-    // Save back to localStorage
-    localStorage.setItem('academicDocuments', JSON.stringify(documents));
+    // Save back to localStorage with user prefix
+    localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify(documents));
     
     // Log success message for debugging
-    console.log(`Document saved successfully with ID: ${documentData.id}`);
+    console.log(`Document saved successfully with ID: ${documentData.id} for user prefix: ${userPrefix}`);
     
     return true;
   } catch (error) {
@@ -68,32 +77,23 @@ export const saveCapsule = (documentData: any): boolean => {
 };
 
 /**
- * Get all documents from localStorage
+ * Get all documents from localStorage for current user
  */
 export const getAllCapsules = () => {
   try {
-    // First try to get from academicDocuments (standard key)
-    const data = localStorage.getItem('academicDocuments');
+    const userPrefix = getCurrentUserPrefix();
     
-    // If no data exists in the 'academicDocuments' key
+    // Get from user-specific storage
+    const data = localStorage.getItem(`${userPrefix}academicDocuments`);
+    
+    // If no data exists
     if (!data) {
-      console.log("No documents found in 'academicDocuments'");
-      
-      // Try the old format for backward compatibility
-      const oldData = localStorage.getItem('timeCapsules');
-      if (oldData) {
-        console.log("Found documents in 'timeCapsules', migrating to 'academicDocuments'");
-        // Migrate data to new key
-        localStorage.setItem('academicDocuments', oldData);
-        return JSON.parse(oldData);
-      }
-      
-      console.log("No documents found at all");
+      console.log(`No documents found for user prefix: ${userPrefix}`);
       return [];
     }
     
     const parsedData = JSON.parse(data);
-    console.log(`Found ${parsedData.length} documents in storage`);
+    console.log(`Found ${parsedData.length} documents in storage for user prefix: ${userPrefix}`);
     return parsedData;
   } catch (error) {
     console.error("Error retrieving documents:", error);
@@ -103,7 +103,7 @@ export const getAllCapsules = () => {
 };
 
 /**
- * Get a specific document by ID
+ * Get a specific document by ID for current user
  */
 export const getCapsuleById = (id: string) => {
   try {
@@ -111,9 +111,9 @@ export const getCapsuleById = (id: string) => {
     const document = documents.find((doc: any) => doc.id === id);
     
     if (document) {
-      console.log(`Found document with ID: ${id}`);
+      console.log(`Found document with ID: ${id} for current user`);
     } else {
-      console.log(`No document found with ID: ${id}`);
+      console.log(`No document found with ID: ${id} for current user`);
     }
     
     return document || null;
@@ -124,14 +124,15 @@ export const getCapsuleById = (id: string) => {
 };
 
 /**
- * Delete a document by ID
+ * Delete a document by ID for current user
  */
 export const deleteCapsule = (id: string): boolean => {
   try {
+    const userPrefix = getCurrentUserPrefix();
     const documents = getAllCapsules();
     const filteredDocuments = documents.filter((doc: any) => doc.id !== id);
-    localStorage.setItem('academicDocuments', JSON.stringify(filteredDocuments));
-    console.log(`Document with ID: ${id} deleted successfully`);
+    localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify(filteredDocuments));
+    console.log(`Document with ID: ${id} deleted successfully for user prefix: ${userPrefix}`);
     return true;
   } catch (error) {
     console.error("Error deleting document:", error);
@@ -222,7 +223,7 @@ export const getDocumentsByType = (documentType: string) => {
 };
 
 /**
- * Load dashboard capsules from localStorage
+ * Load dashboard capsules from localStorage for current user
  */
 export const loadDashboardCapsules = () => {
   try {
@@ -245,6 +246,9 @@ export const debugStorage = () => {
   try {
     console.log("--- Storage Debug Information ---");
     
+    const userPrefix = getCurrentUserPrefix();
+    console.log("Current user prefix:", userPrefix);
+    
     // Log all localStorage keys
     console.log("All localStorage keys:");
     for (let i = 0; i < localStorage.length; i++) {
@@ -252,25 +256,15 @@ export const debugStorage = () => {
       console.log(`- ${key}`);
     }
     
-    // Check academicDocuments specifically
-    const academicDocs = localStorage.getItem('academicDocuments');
-    console.log("academicDocuments:", academicDocs ? JSON.parse(academicDocs).length + " items" : "null");
-    
-    // Check timeCapsules for backward compatibility
-    const timeCapsules = localStorage.getItem('timeCapsules');
-    console.log("timeCapsules:", timeCapsules ? JSON.parse(timeCapsules).length + " items" : "null");
-    
-    // If we have data in timeCapsules but not in academicDocuments, migrate it
-    if (timeCapsules && !academicDocs) {
-      console.log("Migrating data from timeCapsules to academicDocuments");
-      localStorage.setItem('academicDocuments', timeCapsules);
-    }
+    // Check user-specific academicDocuments
+    const userDocs = localStorage.getItem(`${userPrefix}academicDocuments`);
+    console.log(`User documents (${userPrefix}academicDocuments):`, userDocs ? JSON.parse(userDocs).length + " items" : "null");
     
     console.log("--- End Debug Information ---");
     
     return {
-      academicDocuments: academicDocs ? JSON.parse(academicDocs) : null,
-      timeCapsules: timeCapsules ? JSON.parse(timeCapsules) : null,
+      userPrefix,
+      userDocuments: userDocs ? JSON.parse(userDocs) : null,
       allKeys: Object.keys(localStorage)
     };
   } catch (error) {
@@ -278,4 +272,3 @@ export const debugStorage = () => {
     return { error: error instanceof Error ? error.message : "Unknown error" };
   }
 };
-

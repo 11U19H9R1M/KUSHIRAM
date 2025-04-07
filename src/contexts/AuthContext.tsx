@@ -73,6 +73,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
+  // Initialize user data after login/signup
+  const initializeUserData = (userId: string) => {
+    // Create user-specific prefix for storage
+    const userPrefix = `user_${userId}_`;
+    
+    // Set the user prefix in localStorage for other components to use
+    localStorage.setItem("currentUserPrefix", userPrefix);
+    
+    // Initialize empty capsules array if not exists
+    const userCapsules = localStorage.getItem(`${userPrefix}academicDocuments`);
+    if (!userCapsules) {
+      localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify([]));
+    }
+    
+    console.log(`Initialized data storage for user: ${userId}`);
+  };
+
   // Login function
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -96,13 +113,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Store user in localStorage
       localStorage.setItem("timeVaultUser", JSON.stringify(userWithoutPassword));
       
+      // Initialize user-specific data
+      initializeUserData(foundUser.id);
+      
       // Update state
       setUser(userWithoutPassword);
       
       // Show success toast
       toast.success(`Welcome back, ${foundUser.name}!`);
       
-      // Redirect based on role
+      // Redirect to dashboard
       navigate("/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
@@ -126,8 +146,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Create new user
+      const newUserId = `user_${Date.now()}`;
       const newUser = {
-        id: `user_${Date.now()}`,
+        id: newUserId,
         email,
         role,
         name
@@ -136,13 +157,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Store user in localStorage
       localStorage.setItem("timeVaultUser", JSON.stringify(newUser));
       
+      // Initialize user-specific data
+      initializeUserData(newUserId);
+      
       // Update state
       setUser(newUser);
       
       // Show success toast
       toast.success("Account created successfully!");
       
-      // Redirect based on role
+      // Redirect to dashboard
       navigate("/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create account");
@@ -154,6 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Logout function
   const logout = () => {
+    // Remove user-specific data prefix
+    localStorage.removeItem("currentUserPrefix");
+    
     // Remove user from localStorage
     localStorage.removeItem("timeVaultUser");
     
