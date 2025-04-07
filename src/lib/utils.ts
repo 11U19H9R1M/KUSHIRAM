@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -98,4 +99,57 @@ export function getResponsiveContainer(
   return `w-full mx-${centered ? 'auto' : '0'} ${
     withPadding ? 'px-4 sm:px-6 md:px-8' : ''
   } max-w-7xl`;
+}
+
+/**
+ * Generates glass morphism styles with responsive properties
+ */
+export function getGlassMorphismStyles(
+  opacity: 'low' | 'medium' | 'high' = 'medium',
+  blur: 'sm' | 'md' | 'lg' = 'md'
+): string {
+  const opacityValues = {
+    low: 'bg-white/5 dark:bg-black/5',
+    medium: 'bg-white/10 dark:bg-black/10',
+    high: 'bg-white/20 dark:bg-black/20'
+  };
+  
+  const blurValues = {
+    sm: 'backdrop-blur-sm',
+    md: 'backdrop-blur-md',
+    lg: 'backdrop-blur-lg'
+  };
+  
+  return `${opacityValues[opacity]} ${blurValues[blur]} border border-white/10 dark:border-white/5 shadow-lg`;
+}
+
+/**
+ * Returns appropriate spacing for different device sizes
+ */
+export function getResponsiveSpacing(
+  size: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+): string {
+  const spaces = {
+    xs: 'space-y-1 sm:space-y-2',
+    sm: 'space-y-2 sm:space-y-3',
+    md: 'space-y-3 sm:space-y-4 md:space-y-6',
+    lg: 'space-y-4 sm:space-y-6 md:space-y-8',
+    xl: 'space-y-6 sm:space-y-8 md:space-y-12',
+  };
+  
+  return spaces[size] || spaces.md;
+}
+
+/**
+ * Creates responsive width classes
+ */
+export function getResponsiveWidth(
+  small: boolean = false,
+  fullOnMobile: boolean = true
+): string {
+  if (small) {
+    return fullOnMobile ? 'w-full sm:w-auto sm:max-w-xs' : 'max-w-xs';
+  }
+  
+  return fullOnMobile ? 'w-full sm:w-auto' : 'w-auto';
 }
