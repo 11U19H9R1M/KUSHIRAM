@@ -1,6 +1,6 @@
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, AlertTriangle, RefreshCw, Check, Brain, FileText, Code } from "lucide-react";
+import { Search, AlertTriangle, RefreshCw, Check, Brain, FileText, Code, Shield, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface PlagiarismDetectorProps {
@@ -436,18 +437,30 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
   const duplicateCount = results.filter(r => r.isDuplicate).length;
 
   return (
-    <div className="rounded-md border border-border p-4 bg-background/50 backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-xl border border-border p-4 md:p-6 bg-gradient-to-br from-purple-900/30 via-background/70 to-background/90 backdrop-blur-md shadow-lg"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-medium">Advanced Plagiarism Detection</h3>
+          <div className="p-2 rounded-full bg-purple-500/20 text-purple-400">
+            <Zap className="h-4 w-4 md:h-5 md:w-5" />
+          </div>
+          <h3 className="text-sm md:text-base font-medium bg-gradient-to-r from-purple-200 to-white bg-clip-text text-transparent">
+            Advanced Plagiarism Detection
+          </h3>
         </div>
         
-        <Badge variant={duplicateCount > 0 ? "destructive" : "outline"}>
+        <Badge 
+          variant={duplicateCount > 0 ? "destructive" : "outline"} 
+          className={`${duplicateCount > 0 ? "" : "bg-purple-900/30 border-purple-500/30"} backdrop-blur-sm`}
+        >
           {isChecking ? (
             <span className="flex items-center gap-1">
               <RefreshCw className="h-3 w-3 animate-spin" />
-              Checking
+              Analyzing
             </span>
           ) : duplicateCount > 0 ? (
             <span className="flex items-center gap-1">
@@ -466,7 +479,10 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
       {/* Sensitivity slider */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium">Detection Sensitivity</span>
+          <span className="text-xs font-medium flex items-center gap-1.5">
+            <Shield className="h-3 w-3 text-purple-400" />
+            Detection Sensitivity
+          </span>
           <span className="text-xs">{sensitivityThreshold}%</span>
         </div>
         <Slider
@@ -476,6 +492,7 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
           step={5}
           onValueChange={(values) => setSensitivityThreshold(values[0])}
           disabled={isChecking}
+          className="[&>.SliderTrack]:h-1.5 [&>.SliderTrack]:bg-purple-900/30 [&>.SliderRange]:bg-purple-500"
         />
       </div>
       
@@ -483,95 +500,102 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
-        className="mb-4 space-y-2 border-t border-b py-2 border-border"
+        className="mb-4 space-y-2 border-t border-b py-2 border-purple-900/30"
       >
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium flex items-center gap-1">
-            <Brain className="h-3 w-3" />
+            <Brain className="h-3 w-3 text-purple-400" />
             Advanced Detection Options
           </span>
           <CollapsibleTrigger asChild>
-            <button className="text-xs text-primary hover:underline">
+            <button className="text-xs text-purple-400 hover:text-purple-300 hover:underline transition-colors">
               {isOpen ? "Hide Options" : "Show Options"}
             </button>
           </CollapsibleTrigger>
         </div>
         
         <CollapsibleContent className="space-y-2 pt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="ignoreBoilerplate"
-                checked={advancedOptions.ignoreBoilerplate}
-                onCheckedChange={(checked) => 
-                  setAdvancedOptions({...advancedOptions, ignoreBoilerplate: checked})
-                }
-              />
-              <Label htmlFor="ignoreBoilerplate" className="text-xs">Ignore Boilerplate</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between p-2 rounded-md bg-purple-900/20">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="ignoreBoilerplate"
+                  checked={advancedOptions.ignoreBoilerplate}
+                  onCheckedChange={(checked) => 
+                    setAdvancedOptions({...advancedOptions, ignoreBoilerplate: checked})
+                  }
+                  className="data-[state=checked]:bg-purple-500"
+                />
+                <Label htmlFor="ignoreBoilerplate" className="text-xs">Ignore Boilerplate</Label>
+              </div>
+              <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20">References</Badge>
             </div>
-            <Badge variant="outline" className="text-xs">References, Headers</Badge>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="checkCode"
-                checked={advancedOptions.checkCode}
-                onCheckedChange={(checked) => 
-                  setAdvancedOptions({...advancedOptions, checkCode: checked})
-                }
-              />
-              <Label htmlFor="checkCode" className="text-xs">Check Code</Label>
+            
+            <div className="flex items-center justify-between p-2 rounded-md bg-purple-900/20">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="checkCode"
+                  checked={advancedOptions.checkCode}
+                  onCheckedChange={(checked) => 
+                    setAdvancedOptions({...advancedOptions, checkCode: checked})
+                  }
+                  className="data-[state=checked]:bg-purple-500"
+                />
+                <Label htmlFor="checkCode" className="text-xs">Check Code</Label>
+              </div>
+              <Badge variant="outline" className="text-xs flex items-center gap-1 bg-purple-500/10 border-purple-500/20">
+                <Code className="h-3 w-3" />
+                AST
+              </Badge>
             </div>
-            <Badge variant="outline" className="text-xs flex items-center gap-1">
-              <Code className="h-3 w-3" />
-              AST Analysis
-            </Badge>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="checkEquations"
-                checked={advancedOptions.checkEquations}
-                onCheckedChange={(checked) => 
-                  setAdvancedOptions({...advancedOptions, checkEquations: checked})
-                }
-              />
-              <Label htmlFor="checkEquations" className="text-xs">Check Equations</Label>
+            
+            <div className="flex items-center justify-between p-2 rounded-md bg-purple-900/20">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="checkEquations"
+                  checked={advancedOptions.checkEquations}
+                  onCheckedChange={(checked) => 
+                    setAdvancedOptions({...advancedOptions, checkEquations: checked})
+                  }
+                  className="data-[state=checked]:bg-purple-500"
+                />
+                <Label htmlFor="checkEquations" className="text-xs">Check Equations</Label>
+              </div>
+              <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20">LaTeX</Badge>
             </div>
-            <Badge variant="outline" className="text-xs">LaTeX Support</Badge>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="semanticAnalysis"
-                checked={advancedOptions.semanticAnalysis}
-                onCheckedChange={(checked) => 
-                  setAdvancedOptions({...advancedOptions, semanticAnalysis: checked})
-                }
-              />
-              <Label htmlFor="semanticAnalysis" className="text-xs">Semantic Analysis</Label>
+            
+            <div className="flex items-center justify-between p-2 rounded-md bg-purple-900/20">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="semanticAnalysis"
+                  checked={advancedOptions.semanticAnalysis}
+                  onCheckedChange={(checked) => 
+                    setAdvancedOptions({...advancedOptions, semanticAnalysis: checked})
+                  }
+                  className="data-[state=checked]:bg-purple-500"
+                />
+                <Label htmlFor="semanticAnalysis" className="text-xs">Semantic Analysis</Label>
+              </div>
+              <Badge variant="outline" className="text-xs flex items-center gap-1 bg-purple-500/10 border-purple-500/20">
+                <Brain className="h-3 w-3" />
+                BERT
+              </Badge>
             </div>
-            <Badge variant="outline" className="text-xs flex items-center gap-1">
-              <Brain className="h-3 w-3" />
-              BERT-like
-            </Badge>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="ignoreOwnDocuments"
-                checked={advancedOptions.ignoreOwnDocuments}
-                onCheckedChange={(checked) => 
-                  setAdvancedOptions({...advancedOptions, ignoreOwnDocuments: checked})
-                }
-              />
-              <Label htmlFor="ignoreOwnDocuments" className="text-xs">Ignore Own Documents</Label>
+            
+            <div className="flex items-center justify-between p-2 rounded-md bg-purple-900/20 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="ignoreOwnDocuments"
+                  checked={advancedOptions.ignoreOwnDocuments}
+                  onCheckedChange={(checked) => 
+                    setAdvancedOptions({...advancedOptions, ignoreOwnDocuments: checked})
+                  }
+                  className="data-[state=checked]:bg-purple-500"
+                />
+                <Label htmlFor="ignoreOwnDocuments" className="text-xs">Ignore Own Documents</Label>
+              </div>
+              <Badge variant="outline" className="text-xs bg-purple-500/10 border-purple-500/20">Version-Aware</Badge>
             </div>
-            <Badge variant="outline" className="text-xs">Version Aware</Badge>
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -582,16 +606,30 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
             <span>Processing document analysis...</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 [&>.ProgressIndicator]:bg-purple-500" />
         </div>
       ) : results.some(r => r.isDuplicate) ? (
-        <Alert variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20">
+        <Alert 
+          variant="destructive" 
+          className="bg-destructive/10 text-destructive border-destructive/20 mt-2 backdrop-blur-sm"
+        >
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Potential Plagiarism Detected</AlertTitle>
           <AlertDescription>
-            <div className="space-y-2">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="space-y-2 mt-2"
+            >
               {results.filter(r => r.isDuplicate).map((result, i) => (
-                <div key={i} className="text-sm mt-1">
+                <motion.div 
+                  key={i} 
+                  initial={{ x: -5, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: i * 0.1 + 0.3 }}
+                  className="text-sm mt-1"
+                >
                   <div className="font-medium">{result.fileName} - {result.similarity}% similarity</div>
                   {result.matchDetails && result.matchDetails.length > 0 && (
                     <div className="mt-1 pl-4 border-l-2 border-destructive/30 text-xs">
@@ -604,32 +642,39 @@ const PlagiarismDetector = ({ files, onPlagiarismDetected }: PlagiarismDetectorP
                       )}
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
-          <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-            <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="text-sm text-muted-foreground flex items-center gap-2 p-3 rounded-md bg-green-500/10 mt-2"
+        >
+          <div className="p-1 bg-green-500/20 rounded-full">
+            <Check className="h-3 w-3 text-green-500" />
           </div>
-          No duplicates detected among {files.filter(f => 
-            f.type.includes("pdf") || 
-            f.type.includes("doc") || 
-            f.type.includes("application/vnd.openxmlformats-officedocument")
-          ).length} document{files.length > 1 ? "s" : ""}.
-        </div>
+          <span>
+            No duplicates detected among {files.filter(f => 
+              f.type.includes("pdf") || 
+              f.type.includes("doc") || 
+              f.type.includes("application/vnd.openxmlformats-officedocument")
+            ).length} document{files.length > 1 ? "s" : ""}.
+          </span>
+        </motion.div>
       )}
       
-      <div className="flex items-start gap-2 mt-4 bg-blue-50 dark:bg-blue-950/30 p-2 rounded-sm">
-        <FileText className="h-4 w-4 text-blue-500 mt-0.5" />
-        <div className="text-xs text-blue-700 dark:text-blue-400">
+      <div className="flex items-start gap-2 mt-4 bg-blue-500/10 p-3 rounded-md">
+        <FileText className="h-4 w-4 text-blue-400 mt-0.5" />
+        <div className="text-xs text-blue-300">
           <p>This feature performs advanced semantic analysis to detect plagiarism across documents. 
           Cross-references content with previous uploads, looking for both exact matches and paraphrased content.</p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
