@@ -23,6 +23,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  verifyDocumentHash: (hash: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +52,9 @@ const MOCK_USERS = [
     name: "Admin User"
   }
 ];
+
+// Simulated blockchain document hash store
+const DOCUMENT_HASHES: Record<string, { timestamp: number, owner: string }> = {};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -147,27 +151,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Create new user
       const newUserId = `user_${Date.now()}`;
-      const newUser = {
+      
+      // Add user to mock database (in a real app, this would be stored in a database)
+      const newUserWithPassword = {
         id: newUserId,
         email,
+        password,
         role,
         name
       };
       
-      // Store user in localStorage
-      localStorage.setItem("timeVaultUser", JSON.stringify(newUser));
+      // Add to mock database for future logins
+      MOCK_USERS.push(newUserWithPassword);
+      
+      // Create user without password for return
+      const { password: _, ...newUser } = newUserWithPassword;
       
       // Initialize user-specific data
       initializeUserData(newUserId);
       
-      // Update state
-      setUser(newUser);
-      
       // Show success toast
-      toast.success("Account created successfully!");
+      toast.success("Account created successfully! Please sign in.");
       
-      // Redirect to dashboard
-      navigate("/dashboard");
+      // Redirect to login page instead of dashboard
+      navigate("/login");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create account");
       throw error;
@@ -203,6 +210,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Document hash verification (blockchain simulation)
+  const verifyDocumentHash = async (hash: string): Promise<boolean> => {
+    // Simulate blockchain verification delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Check if hash exists in our simulated blockchain
+    return hash in DOCUMENT_HASHES;
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -211,7 +227,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       signup, 
       logout,
-      updateUser
+      updateUser,
+      verifyDocumentHash
     }}>
       {children}
     </AuthContext.Provider>

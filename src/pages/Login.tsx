@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Eye, EyeOff, LogIn, Mail } from "lucide-react";
+import { Archive, Eye, EyeOff, LogIn, Mail, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import BlockchainVerification from "@/components/BlockchainVerification";
 
 // Define form schema
 const formSchema = z.object({
@@ -140,7 +141,7 @@ const Login = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white" 
                   disabled={isLoading}
                   size="lg"
                 >
@@ -178,26 +179,30 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right side - Image/Brand */}
+        {/* Right side - Blockchain verification */}
         <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/20 to-secondary/20 p-12 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 backdrop-blur-sm"></div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-12">
-            <div className="glass-card p-8 rounded-xl backdrop-blur-md bg-white/10 shadow-xl max-w-md">
-              <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
-              <p className="text-base opacity-90 mb-6">
-                Securely preserve and schedule the release of important academic documents
-                with TimeVault's time-locked digital vaults.
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-medium mb-1">For Students</div>
-                  <p className="opacity-80">Access time-released course materials and submit assignments</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-medium mb-1">For Faculty</div>
-                  <p className="opacity-80">Upload documents and schedule their release to students</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+            <div className="w-full max-w-md space-y-6">
+              <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
+                <p className="text-base opacity-90 mb-6">
+                  Securely preserve and schedule the release of important academic documents
+                  with TimeVault's time-locked digital vaults and blockchain verification.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="font-medium mb-1">For Students</div>
+                    <p className="opacity-80">Access time-released course materials and submit assignments</p>
+                  </div>
+                  <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="font-medium mb-1">For Faculty</div>
+                    <p className="opacity-80">Upload documents and schedule their release to students</p>
+                  </div>
                 </div>
               </div>
+              
+              <BlockchainVerification />
             </div>
           </div>
         </div>

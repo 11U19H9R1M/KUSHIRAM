@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SelfDestructingDocuments from "@/components/SelfDestructingDocuments";
 
 // Define form schema
 const formSchema = z.object({
@@ -63,7 +64,7 @@ const Signup = () => {
     setIsLoading(true);
     try {
       await signup(data.email, data.password, data.name, data.role);
-      navigate("/dashboard", { replace: true });
+      // The signup function now redirects to login page
     } catch (error) {
       // Error is handled in the auth context
       console.error(error);
@@ -82,23 +83,27 @@ const Signup = () => {
         {/* Left side - Image/Brand */}
         <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/20 to-secondary/20 p-12 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 backdrop-blur-sm"></div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-12">
-            <div className="glass-card p-8 rounded-xl backdrop-blur-md bg-white/10 shadow-xl max-w-md">
-              <h2 className="text-2xl font-bold mb-4 text-center">Join TimeVault Academia</h2>
-              <p className="text-base opacity-90 mb-6">
-                Create an account to access academic documents with secure time-locked releases, 
-                perfect for educational institutions and research collaboration.
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-medium mb-1">For Students</div>
-                  <p className="opacity-80">Access course materials as they are released by your instructors</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-medium mb-1">For Faculty</div>
-                  <p className="opacity-80">Create time-locked document releases for your courses</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+            <div className="w-full max-w-md space-y-6">
+              <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                <h2 className="text-2xl font-bold mb-4 text-center">Join TimeVault Academia</h2>
+                <p className="text-base opacity-90 mb-6">
+                  Create an account to access academic documents with secure time-locked releases and
+                  advanced blockchain verification for tamper-proof credentials.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="font-medium mb-1">For Students</div>
+                    <p className="opacity-80">Access course materials as they are released by your instructors</p>
+                  </div>
+                  <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="font-medium mb-1">For Faculty</div>
+                    <p className="opacity-80">Create time-locked document releases for your courses</p>
+                  </div>
                 </div>
               </div>
+              
+              <SelfDestructingDocuments />
             </div>
           </div>
         </div>
@@ -113,7 +118,7 @@ const Signup = () => {
               </Link>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Create an account</h1>
               <p className="text-muted-foreground mt-2">
-                Sign up to start using TimeVault Academia
+                Sign up to start using TimeVault Academia's advanced features
               </p>
             </div>
 
@@ -220,7 +225,7 @@ const Signup = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white" 
                   disabled={isLoading}
                   size="lg"
                 >
