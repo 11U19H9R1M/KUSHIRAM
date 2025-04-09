@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 // Define user roles
-export type UserRole = "student" | "faculty" | "admin";
+export type UserRole = "student" | "faculty" | "admin" | "librarian";
 
 // Define user interface
 export interface User {
@@ -24,6 +24,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   verifyDocumentHash: (hash: string) => Promise<boolean>;
+  getDashboardPath: (email: string) => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +51,13 @@ const MOCK_USERS = [
     password: "password123",
     role: "admin" as UserRole,
     name: "Admin User"
+  },
+  {
+    id: "4",
+    email: "librarian@library.com",
+    password: "password123",
+    role: "librarian" as UserRole,
+    name: "Library Admin"
   }
 ];
 
@@ -76,6 +84,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setIsLoading(false);
   }, []);
+
+  // Determine which dashboard to redirect to based on email domain
+  const getDashboardPath = (email: string): string => {
+    if (email.endsWith('@library.com')) {
+      return '/library';
+    }
+    return '/dashboard';
+  };
 
   // Initialize user data after login/signup
   const initializeUserData = (userId: string) => {
@@ -126,8 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Show success toast
       toast.success(`Welcome back, ${foundUser.name}!`);
       
-      // Redirect to dashboard
-      navigate("/dashboard");
+      // Redirect based on email domain
+      const redirectPath = getDashboardPath(email);
+      navigate(redirectPath);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
       throw error;
@@ -228,7 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signup, 
       logout,
       updateUser,
-      verifyDocumentHash
+      verifyDocumentHash,
+      getDashboardPath
     }}>
       {children}
     </AuthContext.Provider>

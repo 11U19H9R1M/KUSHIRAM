@@ -25,9 +25,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If allowedRoles is defined and user's role is not included, redirect to dashboard
+  // If allowedRoles is defined and user's role is not included, redirect to appropriate dashboard
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    // Librarians go to library, everyone else to dashboard
+    const redirectPath = user.role === "librarian" ? "/library" : "/dashboard";
+    return <Navigate to={redirectPath} replace />;
   }
 
   // If authenticated and role is allowed (or no roles specified), render children

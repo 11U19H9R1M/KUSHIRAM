@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import GraduationMemories from "./pages/GraduationMemories";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Library from "./pages/Library";
 
 // Components
 import { AuthProvider } from "./contexts/AuthContext";
@@ -151,6 +152,13 @@ const App = () => (
                 <PublicRoute>
                   <Index />
                 </PublicRoute>
+              } />
+              
+              {/* Library Route */}
+              <Route path="/library" element={
+                <ProtectedRoute allowedRoles={["librarian", "admin", "faculty", "student"]}>
+                  <Library />
+                </ProtectedRoute>
               } />
               
               {/* Protected Routes */}

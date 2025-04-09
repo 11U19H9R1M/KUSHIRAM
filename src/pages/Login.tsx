@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Eye, EyeOff, LogIn, Mail, Shield } from "lucide-react";
+import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import BlockchainVerification from "@/components/BlockchainVerification";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Define form schema
 const formSchema = z.object({
@@ -31,12 +32,10 @@ type FormData = z.infer<typeof formSchema>;
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState("timevault");
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
-
-  // Get redirect location or default to dashboard
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  const { login, getDashboardPath } = useAuth();
 
   // Initialize form
   const form = useForm<FormData>({
@@ -51,9 +50,8 @@ const Login = () => {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      navigate(from, { replace: true });
+      // Note: navigation is now handled within the login function in AuthContext
     } catch (error) {
-      // Error is handled in the auth context
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -62,6 +60,16 @@ const Login = () => {
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Pre-fill email based on selected tab
+    if (value === "timevault") {
+      form.setValue("email", "");
+    } else if (value === "library") {
+      form.setValue("email", "@library.com");
+    }
   };
 
   return (
@@ -81,6 +89,29 @@ const Login = () => {
               </p>
             </div>
 
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="timevault" className="flex items-center gap-2">
+                  <Archive className="h-4 w-4" />
+                  <span>TimeVault</span>
+                </TabsTrigger>
+                <TabsTrigger value="library" className="flex items-center gap-2">
+                  <Book className="h-4 w-4" />
+                  <span>Library</span>
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="timevault" className="mt-2">
+                <div className="text-sm text-muted-foreground">
+                  Sign in to access academic documents, time-locked vaults, and verification tools.
+                </div>
+              </TabsContent>
+              <TabsContent value="library" className="mt-2">
+                <div className="text-sm text-muted-foreground">
+                  Sign in to access the digital library resources, engineering subjects, and recorded lectures.
+                </div>
+              </TabsContent>
+            </Tabs>
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
@@ -94,7 +125,7 @@ const Login = () => {
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input 
                             {...field} 
-                            placeholder="you@example.com" 
+                            placeholder={activeTab === "library" ? "you@library.com" : "you@example.com"} 
                             className="pl-10" 
                             type="email"
                           />
@@ -173,36 +204,86 @@ const Login = () => {
                   <p><span className="opacity-70">Student:</span> student@example.com / password123</p>
                   <p><span className="opacity-70">Faculty:</span> faculty@example.com / password123</p>
                   <p><span className="opacity-70">Admin:</span> admin@example.com / password123</p>
+                  <p><span className="opacity-70">Library:</span> librarian@library.com / password123</p>
                 </div>
               </form>
             </Form>
           </div>
         </div>
 
-        {/* Right side - Blockchain verification */}
+        {/* Right side - Information Panels */}
         <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/20 to-secondary/20 p-12 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 backdrop-blur-sm"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
             <div className="w-full max-w-md space-y-6">
-              <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
-                <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
-                <p className="text-base opacity-90 mb-6">
-                  Securely preserve and schedule the release of important academic documents
-                  with TimeVault's time-locked digital vaults and blockchain verification.
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-white/20 p-3 rounded-lg">
-                    <div className="font-medium mb-1">For Students</div>
-                    <p className="opacity-80">Access time-released course materials and submit assignments</p>
-                  </div>
-                  <div className="bg-white/20 p-3 rounded-lg">
-                    <div className="font-medium mb-1">For Faculty</div>
-                    <p className="opacity-80">Upload documents and schedule their release to students</p>
+              {activeTab === "timevault" ? (
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                  <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
+                  <p className="text-base opacity-90 mb-6">
+                    Securely preserve and schedule the release of important academic documents
+                    with TimeVault's time-locked digital vaults and blockchain verification.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <div className="font-medium mb-1">For Students</div>
+                      <p className="opacity-80">Access time-released course materials and submit assignments</p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <div className="font-medium mb-1">For Faculty</div>
+                      <p className="opacity-80">Upload documents and schedule their release to students</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                  <h2 className="text-2xl font-bold mb-4 text-center">Digital Library</h2>
+                  <p className="text-base opacity-90 mb-6">
+                    Access a comprehensive collection of academic resources, engineering textbooks,
+                    and recorded video lectures to enhance your learning experience.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <div className="font-medium mb-1">Engineering Subjects</div>
+                      <p className="opacity-80">Browse resources categorized by engineering disciplines</p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-lg">
+                      <div className="font-medium mb-1">Recorded Lectures</div>
+                      <p className="opacity-80">Watch video recordings of classes and tutorials</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
-              <BlockchainVerification />
+              {activeTab === "timevault" ? (
+                <BlockchainVerification />
+              ) : (
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl">
+                  <h2 className="text-xl font-bold mb-3">Discover Academic Resources</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <Book className="w-5 h-5 text-primary mt-0.5" />
+                      <div>
+                        <h3 className="font-medium">Digital Textbooks</h3>
+                        <p className="text-sm opacity-80">Access the latest engineering textbooks and reference materials</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Laptop className="w-5 h-5 text-primary mt-0.5" />
+                      <div>
+                        <h3 className="font-medium">Video Lectures</h3>
+                        <p className="text-sm opacity-80">Watch recorded classes and laboratory demonstrations</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-5 h-5 text-primary mt-0.5" />
+                      <div>
+                        <h3 className="font-medium">Secure Access</h3>
+                        <p className="text-sm opacity-80">Authenticated access to course-specific materials</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
