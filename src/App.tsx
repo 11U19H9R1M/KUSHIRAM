@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,7 @@ import GraduationMemories from "./pages/GraduationMemories";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Library from "./pages/Library";
+import LibrarianDashboard from "./pages/LibrarianDashboard";
 
 // Components
 import { AuthProvider } from "./contexts/AuthContext";
@@ -29,7 +29,6 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      // Using meta for error handling which is compatible with latest react-query
       meta: {
         onError: (error: Error) => {
           console.error("Query error:", error);
@@ -38,7 +37,6 @@ const queryClient = new QueryClient({
     },
     mutations: {
       retry: 1,
-      // Using meta for error handling which is compatible with latest react-query
       meta: {
         onError: (error: Error) => {
           console.error("Mutation error:", error);
@@ -63,7 +61,6 @@ const ScrollToTop = () => {
 const DebugComponent = () => {
   useEffect(() => {
     console.log("App loaded. Running storage debug...");
-    // Debug localStorage
     debugStorage();
   }, []);
 
@@ -75,7 +72,6 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -84,13 +80,10 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If user is already authenticated and tries to access login/signup pages,
-  // redirect them to dashboard
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // If not authenticated, allow access to login/signup pages
   return <>{children}</>;
 };
 
@@ -99,7 +92,6 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -108,13 +100,35 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If authenticated, show the content
   return <>{children}</>;
+};
+
+// Special route for librarians
+const LibrarianRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user && user.role === "librarian") {
+    return <>{children}</>;
+  }
+
+  return <Navigate to="/dashboard" replace />;
 };
 
 const App = () => (
@@ -128,7 +142,6 @@ const App = () => (
             <ScrollToTop />
             <DebugComponent />
             <Routes>
-              {/* Authentication Routes - Only for non-authenticated users */}
               <Route path="/login" element={
                 <AuthGuard>
                   <Login />
@@ -140,28 +153,30 @@ const App = () => (
                 </AuthGuard>
               } />
               
-              {/* Public About Page - Now requires authentication */}
               <Route path="/about" element={
                 <PublicRoute>
                   <About />
                 </PublicRoute>
               } />
               
-              {/* Home Route - Redirect to login if not authenticated */}
               <Route path="/" element={
                 <PublicRoute>
                   <Index />
                 </PublicRoute>
               } />
               
-              {/* Library Route */}
               <Route path="/library" element={
                 <ProtectedRoute allowedRoles={["librarian", "admin", "faculty", "student"]}>
                   <Library />
                 </ProtectedRoute>
               } />
               
-              {/* Protected Routes */}
+              <Route path="/librarian" element={
+                <LibrarianRoute>
+                  <LibrarianDashboard />
+                </LibrarianRoute>
+              } />
+              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
@@ -182,7 +197,6 @@ const App = () => (
                   <GraduationMemories />
                 </ProtectedRoute>
               } />
-              {/* 404 Page - Accessible without login */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

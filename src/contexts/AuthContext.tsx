@@ -85,10 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  // Determine which dashboard to redirect to based on email domain
+  // Determine which dashboard to redirect to based on email domain or user role
   const getDashboardPath = (email: string): string => {
     if (email.endsWith('@library.com')) {
-      return '/library';
+      return '/librarian';
     }
     return '/dashboard';
   };
@@ -142,8 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Show success toast
       toast.success(`Welcome back, ${foundUser.name}!`);
       
-      // Redirect based on email domain
-      const redirectPath = getDashboardPath(email);
+      // Redirect based on user role
+      const redirectPath = foundUser.role === "librarian" ? "/librarian" : "/dashboard";
       navigate(redirectPath);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
