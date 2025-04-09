@@ -31,10 +31,14 @@ import {
   AlertTriangle
 } from "lucide-react";
 import EnhancementTabs from "@/components/EnhancementTabs";
+import SchedulingOptions from "@/components/SchedulingOptions";
 
 const Create = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("create");
+  const [unlockDate, setUnlockDate] = useState<Date | undefined>(
+    new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) // Default to 30 days from now
+  );
   
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -43,6 +47,11 @@ const Create = () => {
   // Handle tag changes
   const handleTagsChange = (tags: string[]) => {
     setSelectedTags(tags);
+  };
+
+  // Handle unlock date changes
+  const handleUnlockDateChange = (date: Date | undefined) => {
+    setUnlockDate(date);
   };
 
   return (
@@ -183,52 +192,11 @@ const Create = () => {
                     Set up time-based access controls and blockchain verification for your academic documents
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Time-Lock Configuration</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Configure advanced time-lock settings to control when your document
-                        becomes available, with options for gradual access or scheduled release.
-                      </p>
-                      <Button className="w-full sm:w-auto">
-                        Configure Time-Lock
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Access Control Lists</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Specify individuals or groups who can access your documents,
-                        with optional time-based or conditional access rules.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="secondary">
-                        Manage Access
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Blockchain Verification</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Secure your document with blockchain verification to ensure
-                        its authenticity and prevent unauthorized modifications.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="outline">
-                        Enable Verification
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Automated Notifications</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Set up notification rules for document releases, access attempts,
-                        or verification status changes.
-                      </p>
-                      <Button className="w-full sm:w-auto" variant="outline">
-                        Configure Notifications
-                      </Button>
-                    </div>
-                  </div>
+                <CardContent>
+                  <SchedulingOptions 
+                    unlockDate={unlockDate}
+                    onUnlockDateChange={handleUnlockDateChange}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
