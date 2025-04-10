@@ -1,64 +1,112 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap } from "lucide-react";
+import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap, BookA, Newspaper, Lock, FileText, Book as BookIcon, Archive, FileVideo, BookCopy, Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Sample data for engineering subjects
-const engineeringSubjects = [
+// Updated categories for books
+const bookCategories = [
   {
-    id: "mech",
-    title: "Mechanical Engineering",
-    books: 126,
+    id: "eng",
+    title: "Engineering",
+    books: 215,
     videos: 78,
-    icon: <GraduationCap className="h-8 w-8 text-orange-500" />,
-    color: "bg-orange-100 text-orange-800 border-orange-200"
-  },
-  {
-    id: "elec",
-    title: "Electrical Engineering",
-    books: 158,
-    videos: 92,
-    icon: <GraduationCap className="h-8 w-8 text-blue-500" />,
-    color: "bg-blue-100 text-blue-800 border-blue-200"
-  },
-  {
-    id: "civil",
-    title: "Civil Engineering",
-    books: 104,
-    videos: 63,
-    icon: <GraduationCap className="h-8 w-8 text-green-500" />,
-    color: "bg-green-100 text-green-800 border-green-200"
+    icon: <GraduationCap className="h-8 w-8 text-orange-500 dark:text-orange-400" />,
+    color: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800"
   },
   {
     id: "cs",
     title: "Computer Science",
     books: 212,
     videos: 137,
-    icon: <GraduationCap className="h-8 w-8 text-purple-500" />,
-    color: "bg-purple-100 text-purple-800 border-purple-200"
+    icon: <BrainCircuit className="h-8 w-8 text-purple-500 dark:text-purple-400" />,
+    color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
+  },
+  {
+    id: "math",
+    title: "Mathematics",
+    books: 158,
+    videos: 92,
+    icon: <BookIcon className="h-8 w-8 text-blue-500 dark:text-blue-400" />,
+    color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+  },
+  {
+    id: "phys",
+    title: "Physics",
+    books: 130,
+    videos: 67,
+    icon: <Microscope className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />,
+    color: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
   },
   {
     id: "chem",
-    title: "Chemical Engineering",
+    title: "Chemistry",
     books: 95,
     videos: 59,
-    icon: <GraduationCap className="h-8 w-8 text-red-500" />,
-    color: "bg-red-100 text-red-800 border-red-200"
+    icon: <BookIcon className="h-8 w-8 text-red-500 dark:text-red-400" />,
+    color: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
   },
   {
-    id: "aero",
-    title: "Aerospace Engineering",
+    id: "med",
+    title: "Medicine",
+    books: 112,
+    videos: 46,
+    icon: <Heart className="h-8 w-8 text-pink-500 dark:text-pink-400" />,
+    color: "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800"
+  },
+  {
+    id: "biz",
+    title: "Business & Economics",
+    books: 142,
+    videos: 53,
+    icon: <Briefcase className="h-8 w-8 text-amber-500 dark:text-amber-400" />,
+    color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800"
+  },
+  {
+    id: "hum",
+    title: "Humanities",
+    books: 124,
+    videos: 43,
+    icon: <BookOpen className="h-8 w-8 text-rose-500 dark:text-rose-400" />,
+    color: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800"
+  },
+  {
+    id: "art",
+    title: "Arts & Design",
+    books: 97,
+    videos: 35,
+    icon: <PenTool className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />,
+    color: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800"
+  },
+  {
+    id: "law",
+    title: "Law",
     books: 87,
-    videos: 48,
-    icon: <GraduationCap className="h-8 w-8 text-cyan-500" />,
-    color: "bg-cyan-100 text-cyan-800 border-cyan-200"
+    videos: 32,
+    icon: <Scale className="h-8 w-8 text-slate-500 dark:text-slate-400" />,
+    color: "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-800"
+  },
+  {
+    id: "arch",
+    title: "Architecture",
+    books: 79,
+    videos: 28,
+    icon: <Building className="h-8 w-8 text-cyan-500 dark:text-cyan-400" />,
+    color: "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800"
+  },
+  {
+    id: "journal",
+    title: "Journals & Articles",
+    books: 215,
+    videos: 12,
+    icon: <Newspaper className="h-8 w-8 text-neutral-500 dark:text-neutral-400" />,
+    color: "bg-neutral-100 text-neutral-800 border-neutral-200 dark:bg-neutral-900/30 dark:text-neutral-300 dark:border-neutral-800"
   }
 ];
 
@@ -100,10 +148,31 @@ const recentVideos = [
 
 const Library = () => {
   const { user } = useAuth();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredCategories, setFilteredCategories] = useState(bookCategories);
   
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    // Filter categories based on search query
+    if (searchQuery.trim() === "") {
+      setFilteredCategories(bookCategories);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = bookCategories.filter(
+        category => category.title.toLowerCase().includes(query)
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [searchQuery]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search functionality is already handled by the useEffect above
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -115,7 +184,7 @@ const Library = () => {
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Digital Library</h1>
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
-                  Access engineering resources, textbooks, and recorded lectures
+                  Access academic resources, textbooks, journals, and recorded lectures
                 </p>
               </div>
               
@@ -129,33 +198,35 @@ const Library = () => {
                   Video Lectures
                 </Badge>
                 <Badge variant="outline" className="bg-primary/10 border-primary/20">
-                  <GraduationCap className="h-3 w-3 mr-1" />
-                  Engineering Subjects
+                  <Archive className="h-3 w-3 mr-1" />
+                  Archives
                 </Badge>
               </div>
             </div>
           </div>
           
-          <div className="mb-8 flex flex-col sm:flex-row gap-4">
+          <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search for resources, books, or videos..." 
                 className="pl-10 w-full" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button className="bg-primary text-white">
+            <Button type="submit" className="bg-primary text-primary-foreground">
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
-          </div>
+          </form>
           
           <Tabs defaultValue="subjects" className="w-full mb-8">
             <TabsList className="grid grid-cols-3 mb-6 w-full md:w-fit">
               <TabsTrigger value="subjects" className="flex items-center gap-2">
                 <Book className="h-4 w-4" />
-                <span className="hidden sm:inline">Engineering Subjects</span>
-                <span className="sm:hidden">Subjects</span>
+                <span className="hidden sm:inline">Categories</span>
+                <span className="sm:hidden">Categories</span>
               </TabsTrigger>
               <TabsTrigger value="videos" className="flex items-center gap-2">
                 <Video className="h-4 w-4" />
@@ -171,26 +242,26 @@ const Library = () => {
             
             <TabsContent value="subjects">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {engineeringSubjects.map((subject) => (
-                  <Card key={subject.id} className="hover:shadow-lg transition-shadow duration-300">
+                {filteredCategories.map((category) => (
+                  <Card key={category.id} className="hover:shadow-lg transition-shadow duration-300 bg-card dark:bg-card/90">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
-                          {subject.icon}
-                          <CardTitle className="text-lg">{subject.title}</CardTitle>
+                          {category.icon}
+                          <CardTitle className="text-lg">{category.title}</CardTitle>
                         </div>
-                        <Badge className={subject.color}>{subject.books} Resources</Badge>
+                        <Badge className={category.color}>{category.books} Resources</Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-1">
                           <BookOpen className="h-4 w-4" />
-                          <span>{subject.books} Books</span>
+                          <span>{category.books} Books</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Laptop className="h-4 w-4" />
-                          <span>{subject.videos} Videos</span>
+                          <span>{category.videos} Videos</span>
                         </div>
                       </div>
                       <Button className="w-full">Browse Resources</Button>
@@ -198,20 +269,30 @@ const Library = () => {
                   </Card>
                 ))}
               </div>
+              
+              {filteredCategories.length === 0 && (
+                <div className="text-center py-12">
+                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">No categories found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search terms
+                  </p>
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="videos">
-              <Card>
+              <Card className="bg-card dark:bg-card/90">
                 <CardHeader>
                   <CardTitle>Recent Video Lectures</CardTitle>
                   <CardDescription>
-                    Watch recorded classes and engineering demonstrations
+                    Watch recorded classes and demonstrations
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {recentVideos.map((video) => (
-                      <div key={video.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div key={video.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors dark:bg-card/80 dark:hover:bg-accent/20">
                         <div className="flex-1 mb-2 sm:mb-0">
                           <h3 className="font-medium">{video.title}</h3>
                           <div className="text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-1">
@@ -252,14 +333,14 @@ const Library = () => {
             </TabsContent>
           </Tabs>
           
-          <Card className="mb-8">
+          <Card className="mb-8 bg-card dark:bg-card/90">
             <CardHeader>
               <CardTitle>Recommended For You</CardTitle>
               <CardDescription>Based on your academic profile and recent activity</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-primary/20">
+                <Card className="border-primary/20 dark:bg-card/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Introduction to Machine Learning</CardTitle>
                   </CardHeader>
@@ -278,7 +359,7 @@ const Library = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="border-primary/20">
+                <Card className="border-primary/20 dark:bg-card/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Circuit Analysis Fundamentals</CardTitle>
                   </CardHeader>
@@ -297,7 +378,7 @@ const Library = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="border-primary/20">
+                <Card className="border-primary/20 dark:bg-card/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Structural Mechanics</CardTitle>
                   </CardHeader>

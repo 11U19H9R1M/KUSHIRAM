@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop } from "lucide-react";
+import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop, BookOpen, GraduationCap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import BlockchainVerification from "@/components/BlockchainVerification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 // Define form schema
 const formSchema = z.object({
@@ -46,13 +47,24 @@ const Login = () => {
     },
   });
 
+  // Handle email domain detection
+  useEffect(() => {
+    const currentEmail = form.getValues("email");
+    if (currentEmail.endsWith('@library.com')) {
+      setActiveTab("library");
+    } else if (currentEmail && !currentEmail.endsWith('@library.com')) {
+      setActiveTab("timevault");
+    }
+  }, [form.watch("email")]);
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      // Note: navigation is now handled within the login function in AuthContext
+      // Navigation is handled in AuthContext
     } catch (error) {
       console.error(error);
+      toast.error("Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -66,14 +78,22 @@ const Login = () => {
     setActiveTab(value);
     // Pre-fill email based on selected tab
     if (value === "timevault") {
-      form.setValue("email", "");
+      // Clear email if it ends with @library.com
+      const currentEmail = form.getValues("email");
+      if (currentEmail.endsWith('@library.com')) {
+        form.setValue("email", "");
+      }
     } else if (value === "library") {
-      form.setValue("email", "@library.com");
+      const currentEmail = form.getValues("email");
+      if (!currentEmail.endsWith('@library.com')) {
+        // If email doesn't end with @library.com, clear it or set a placeholder
+        form.setValue("email", currentEmail ? `${currentEmail.split('@')[0]}@library.com` : "@library.com");
+      }
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-background">
       <div className="flex flex-1 flex-col md:flex-row">
         {/* Left side - Login Form */}
         <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 flex items-center justify-center">
@@ -107,7 +127,7 @@ const Login = () => {
               </TabsContent>
               <TabsContent value="library" className="mt-2">
                 <div className="text-sm text-muted-foreground">
-                  Sign in to access the digital library resources, engineering subjects, and recorded lectures.
+                  Sign in to access the digital library resources, academic publications, and research materials.
                 </div>
               </TabsContent>
             </Tabs>
@@ -126,8 +146,17 @@ const Login = () => {
                           <Input 
                             {...field} 
                             placeholder={activeTab === "library" ? "you@library.com" : "you@example.com"} 
-                            className="pl-10" 
+                            className="pl-10"
                             type="email"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Auto-detect tab based on email
+                              if (e.target.value.endsWith('@library.com')) {
+                                setActiveTab("library");
+                              } else if (e.target.value && !e.target.value.endsWith('@library.com')) {
+                                setActiveTab("timevault");
+                              }
+                            }}
                           />
                         </div>
                       </FormControl>
@@ -172,13 +201,13 @@ const Login = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white" 
+                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white dark:text-primary-foreground" 
                   disabled={isLoading}
                   size="lg"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
-                      <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></span>
+                      <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white dark:border-primary-foreground"></span>
                       <span>Signing in...</span>
                     </div>
                   ) : (
@@ -199,7 +228,7 @@ const Login = () => {
                 </div>
 
                 {/* Demo credentials */}
-                <div className="bg-secondary/30 rounded-lg p-4 text-sm space-y-2">
+                <div className="bg-secondary/30 dark:bg-secondary/10 rounded-lg p-4 text-sm space-y-2">
                   <p className="font-medium">Demo Credentials:</p>
                   <p><span className="opacity-70">Student:</span> student@example.com / password123</p>
                   <p><span className="opacity-70">Faculty:</span> faculty@example.com / password123</p>
@@ -212,43 +241,43 @@ const Login = () => {
         </div>
 
         {/* Right side - Information Panels */}
-        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/20 to-secondary/20 p-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 backdrop-blur-sm"></div>
+        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/20 to-secondary/20 dark:from-primary/5 dark:to-secondary/5 p-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/5 dark:to-secondary/5 backdrop-blur-sm"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
             <div className="w-full max-w-md space-y-6">
               {activeTab === "timevault" ? (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6">
                   <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
                   <p className="text-base opacity-90 mb-6">
                     Securely preserve and schedule the release of important academic documents
                     with TimeVault's time-locked digital vaults and blockchain verification.
                   </p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
                       <div className="font-medium mb-1">For Students</div>
                       <p className="opacity-80">Access time-released course materials and submit assignments</p>
                     </div>
-                    <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
                       <div className="font-medium mb-1">For Faculty</div>
                       <p className="opacity-80">Upload documents and schedule their release to students</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl mb-6">
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6">
                   <h2 className="text-2xl font-bold mb-4 text-center">Digital Library</h2>
                   <p className="text-base opacity-90 mb-6">
-                    Access a comprehensive collection of academic resources, engineering textbooks,
-                    and recorded video lectures to enhance your learning experience.
+                    Access a comprehensive collection of academic resources, research publications,
+                    and digital materials across multiple disciplines.
                   </p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white/20 p-3 rounded-lg">
-                      <div className="font-medium mb-1">Engineering Subjects</div>
-                      <p className="opacity-80">Browse resources categorized by engineering disciplines</p>
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                      <div className="font-medium mb-1">Diverse Subjects</div>
+                      <p className="opacity-80">Browse resources across various academic disciplines</p>
                     </div>
-                    <div className="bg-white/20 p-3 rounded-lg">
-                      <div className="font-medium mb-1">Recorded Lectures</div>
-                      <p className="opacity-80">Watch video recordings of classes and tutorials</p>
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                      <div className="font-medium mb-1">Digital Archives</div>
+                      <p className="opacity-80">Access journals, articles, and research materials</p>
                     </div>
                   </div>
                 </div>
@@ -257,28 +286,28 @@ const Login = () => {
               {activeTab === "timevault" ? (
                 <BlockchainVerification />
               ) : (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 shadow-xl">
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl">
                   <h2 className="text-xl font-bold mb-3">Discover Academic Resources</h2>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <Book className="w-5 h-5 text-primary mt-0.5" />
+                      <BookOpen className="w-5 h-5 text-primary mt-0.5" />
                       <div>
-                        <h3 className="font-medium">Digital Textbooks</h3>
-                        <p className="text-sm opacity-80">Access the latest engineering textbooks and reference materials</p>
+                        <h3 className="font-medium">Academic Publications</h3>
+                        <p className="text-sm opacity-80">Access journals, textbooks, and reference materials</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Laptop className="w-5 h-5 text-primary mt-0.5" />
+                      <GraduationCap className="w-5 h-5 text-primary mt-0.5" />
                       <div>
-                        <h3 className="font-medium">Video Lectures</h3>
-                        <p className="text-sm opacity-80">Watch recorded classes and laboratory demonstrations</p>
+                        <h3 className="font-medium">Specialized Collections</h3>
+                        <p className="text-sm opacity-80">Browse resources by subject area and field of study</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Shield className="w-5 h-5 text-primary mt-0.5" />
                       <div>
                         <h3 className="font-medium">Secure Access</h3>
-                        <p className="text-sm opacity-80">Authenticated access to course-specific materials</p>
+                        <p className="text-sm opacity-80">Authenticated access to academic and research materials</p>
                       </div>
                     </div>
                   </div>
