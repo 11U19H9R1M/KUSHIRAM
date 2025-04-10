@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Book, BookOpen, Edit, FileText, Plus, Search, Users, Video, GraduationCap, Trash2, 
-  BookMarked, BookIcon, RefreshCw, Filter, DownloadCloud, BookA, Archive, FileVideo } from "lucide-react";
+  BookMarked, BookIcon, RefreshCw, Filter, DownloadCloud, BookA, Archive, FileVideo, BookCopy, 
+  Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,6 +148,50 @@ const libraryBooks = [
     borrowedBy: "faculty@example.com",
     dueDate: "2025-04-25",
     coverColor: "bg-amber-100 dark:bg-amber-900/30"
+  },
+  {
+    id: "book13",
+    title: "The Art of Photography",
+    author: "Elena Richards",
+    subject: "Visual Arts",
+    category: "Arts & Design",
+    available: true,
+    borrowedBy: null,
+    dueDate: null,
+    coverColor: "bg-violet-100 dark:bg-violet-900/30"
+  },
+  {
+    id: "book14",
+    title: "Modern Poetry Analysis",
+    author: "Dr. William Blake",
+    subject: "Literature",
+    category: "Poetry",
+    available: true,
+    borrowedBy: null,
+    dueDate: null,
+    coverColor: "bg-fuchsia-100 dark:bg-fuchsia-900/30"
+  },
+  {
+    id: "book15",
+    title: "Database Design Patterns",
+    author: "Prof. Alan Turing",
+    subject: "Information Technology",
+    category: "Computer Science",
+    available: true,
+    borrowedBy: null,
+    dueDate: null,
+    coverColor: "bg-blue-100 dark:bg-blue-900/30"
+  },
+  {
+    id: "book16",
+    title: "Introduction to Robotics",
+    author: "Dr. Isaac Asimov",
+    subject: "Robotics",
+    category: "Engineering",
+    available: false,
+    borrowedBy: "student@example.com",
+    dueDate: "2025-04-22",
+    coverColor: "bg-teal-100 dark:bg-teal-900/30"
   }
 ];
 
@@ -199,10 +244,26 @@ const recentActivities = [
     user: "Alice Walker (student@example.com)",
     date: "2025-04-03",
     dueDate: "2025-04-18"
+  },
+  {
+    id: "act7",
+    type: "borrow",
+    book: "Modern Poetry Analysis",
+    user: "Thomas Reed (student@example.com)",
+    date: "2025-04-05",
+    dueDate: "2025-04-26"
+  },
+  {
+    id: "act8",
+    type: "return",
+    book: "Introduction to Robotics",
+    user: "Jennifer Kim (faculty@example.com)",
+    date: "2025-04-06",
+    dueDate: null
   }
 ];
 
-// Available categories
+// Available categories - expanded list
 const bookCategories = [
   { id: "all", name: "All Categories" },
   { id: "eng", name: "Engineering" },
@@ -218,7 +279,23 @@ const bookCategories = [
   { id: "hum", name: "Humanities" },
   { id: "art", name: "Arts & Design" },
   { id: "law", name: "Law" },
+  { id: "text", name: "Textbooks" },
+  { id: "ref", name: "Reference Books" },
   { id: "jour", name: "Journals & Articles" },
+  { id: "ebook", name: "E-books" },
+  { id: "research", name: "Research Reports" },
+  { id: "guide", name: "Guides & Manuals" },
+  { id: "case", name: "Case Studies" },
+  { id: "thesis", name: "Theses & Dissertations" },
+  { id: "fiction", name: "Fiction" },
+  { id: "nonfiction", name: "Non-Fiction" },
+  { id: "poetry", name: "Poetry" },
+  { id: "drama", name: "Drama & Plays" },
+  { id: "children", name: "Children's Books" },
+  { id: "ya", name: "Young Adult (YA)" },
+  { id: "rare", name: "Rare Books" },
+  { id: "archive", name: "Archived Materials" },
+  { id: "digital", name: "Digital Archives" },
 ];
 
 const LibrarianDashboard = () => {
@@ -227,6 +304,14 @@ const LibrarianDashboard = () => {
   const [filteredBooks, setFilteredBooks] = useState(libraryBooks);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const [animateCards, setAnimateCards] = useState(false);
+  
+  useEffect(() => {
+    // Trigger animation after component mounts
+    setTimeout(() => {
+      setAnimateCards(true);
+    }, 300);
+  }, []);
   
   useEffect(() => {
     // Filter books based on search query, category, and availability
@@ -283,12 +368,12 @@ const LibrarianDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10 animate-fade-in">
       <Header />
       <main className="flex-1 pt-16 md:pt-24 pb-16 md:pb-20">
         <div className="container px-4 md:px-6">
           <div className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Librarian Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight gradient-text">Librarian Dashboard</h1>
             <p className="text-muted-foreground mt-1 md:mt-2">
               Manage library resources and monitor book checkouts
             </p>
@@ -309,19 +394,19 @@ const LibrarianDashboard = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="bg-card dark:bg-card/90">
+            <Card className="bg-card dark:bg-card/90 hover-lift transition-all duration-300">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Total Books</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                  <BookOpen className="h-5 w-5 text-primary animate-soft-pulse" />
                   <span className="text-3xl font-bold">{libraryBooks.length}</span>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-card dark:bg-card/90">
+            <Card className="bg-card dark:bg-card/90 hover-lift transition-all duration-300">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Available</CardTitle>
               </CardHeader>
@@ -335,7 +420,7 @@ const LibrarianDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-card dark:bg-card/90">
+            <Card className="bg-card dark:bg-card/90 hover-lift transition-all duration-300">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Checked Out</CardTitle>
               </CardHeader>
@@ -357,12 +442,12 @@ const LibrarianDashboard = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search books by title, author, or subject..." 
-                    className="pl-10 w-full" 
+                    className="pl-10 w-full glass-input" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button className="bg-primary text-primary-foreground" onClick={handleAddNewBook}>
+                <Button className="bg-primary text-primary-foreground hover-lift" onClick={handleAddNewBook}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Book
                 </Button>
@@ -376,7 +461,7 @@ const LibrarianDashboard = () => {
                     onValueChange={setSelectedCategory}
                     value={selectedCategory}
                   >
-                    <SelectTrigger id="category-filter" className="w-full sm:w-[200px]">
+                    <SelectTrigger id="category-filter" className="w-full sm:w-[200px] glass-input">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -396,7 +481,7 @@ const LibrarianDashboard = () => {
                     onValueChange={setAvailabilityFilter}
                     value={availabilityFilter}
                   >
-                    <SelectTrigger id="availability-filter" className="w-full sm:w-[200px]">
+                    <SelectTrigger id="availability-filter" className="w-full sm:w-[200px] glass-input">
                       <SelectValue placeholder="Availability" />
                     </SelectTrigger>
                     <SelectContent>
@@ -411,7 +496,7 @@ const LibrarianDashboard = () => {
                   setSearchQuery("");
                   setSelectedCategory("all");
                   setAvailabilityFilter("all");
-                }} className="ml-auto">
+                }} className="ml-auto hover-scale">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
@@ -437,10 +522,14 @@ const LibrarianDashboard = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="books">
+            <TabsContent value="books" className="animate-fade-in">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredBooks.map((book) => (
-                  <Card key={book.id} className={`border-l-4 ${book.coverColor} hover:shadow-md transition-shadow dark:bg-card/90`}>
+                {filteredBooks.map((book, index) => (
+                  <Card 
+                    key={book.id} 
+                    className={`border-l-4 ${book.coverColor} dark:bg-card/90 transition-all duration-300 ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                    style={{ transitionDelay: `${index * 50}ms` }}
+                  >
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-lg line-clamp-1">{book.title}</CardTitle>
@@ -473,7 +562,7 @@ const LibrarianDashboard = () => {
                       {book.available ? (
                         <Button 
                           size="sm" 
-                          className="flex-1"
+                          className="flex-1 hover-scale"
                           onClick={() => handleBookAction(book.id, 'checkout')}
                         >
                           Check Out
@@ -482,7 +571,7 @@ const LibrarianDashboard = () => {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1"
+                          className="flex-1 hover-scale"
                           onClick={() => handleBookAction(book.id, 'return')}
                         >
                           Mark as Returned
@@ -491,6 +580,7 @@ const LibrarianDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="ghost"
+                        className="hover-scale"
                         onClick={() => handleBookAction(book.id, 'edit')}
                       >
                         <Edit className="h-4 w-4" />
@@ -498,7 +588,7 @@ const LibrarianDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="ghost"
-                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 hover-scale"
                         onClick={() => handleBookAction(book.id, 'delete')}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -509,7 +599,7 @@ const LibrarianDashboard = () => {
               </div>
               
               {filteredBooks.length === 0 && (
-                <div className="text-center py-12">
+                <div className="text-center py-12 animate-fade-in">
                   <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium">No books found</h3>
                   <p className="text-muted-foreground">
@@ -519,7 +609,7 @@ const LibrarianDashboard = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="activities">
+            <TabsContent value="activities" className="animate-fade-in">
               <Card className="bg-card dark:bg-card/90">
                 <CardHeader>
                   <CardTitle>Recent Activities</CardTitle>
@@ -527,8 +617,11 @@ const LibrarianDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors dark:bg-card/80 dark:hover:bg-accent/20">
+                    {recentActivities.map((activity, index) => (
+                      <div key={activity.id} 
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-all dark:bg-card/80 dark:hover:bg-accent/20 ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                        style={{ transitionDelay: `${index * 50}ms` }}
+                      >
                         <div className="flex-1 mb-2 sm:mb-0">
                           <div className="flex items-start sm:items-center gap-3">
                             {activity.type === 'borrow' && (
@@ -572,7 +665,7 @@ const LibrarianDashboard = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="videos">
+            <TabsContent value="videos" className="animate-fade-in">
               <Card className="bg-card dark:bg-card/90">
                 <CardHeader>
                   <CardTitle>Lecture Videos</CardTitle>
@@ -580,17 +673,17 @@ const LibrarianDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <Video className="h-16 w-16 text-muted-foreground mb-4" />
+                    <Video className="h-16 w-16 text-muted-foreground mb-4 animate-soft-pulse" />
                     <h3 className="text-xl font-medium mb-2">Video Management Coming Soon</h3>
                     <p className="text-muted-foreground max-w-md mb-6">
                       The video library management system is under development and will be available in the next update.
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center">
-                      <Button variant="outline" className="flex items-center gap-2">
+                      <Button variant="outline" className="flex items-center gap-2 hover-lift">
                         <DownloadCloud className="h-4 w-4" />
                         <span>Import Videos</span>
                       </Button>
-                      <Button variant="outline" className="flex items-center gap-2">
+                      <Button variant="outline" className="flex items-center gap-2 hover-lift">
                         <FileVideo className="h-4 w-4" />
                         <span>Browse Catalog</span>
                       </Button>

@@ -84,26 +84,24 @@ const Login = () => {
         form.setValue("email", "");
       }
     } else if (value === "library") {
-      const currentEmail = form.getValues("email");
-      if (!currentEmail.endsWith('@library.com')) {
-        // If email doesn't end with @library.com, clear it or set a placeholder
-        form.setValue("email", currentEmail ? `${currentEmail.split('@')[0]}@library.com` : "@library.com");
-      }
+      // Set default library email for easier access
+      form.setValue("email", "librarian@library.com");
+      form.setValue("password", "password123");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background dark:bg-background">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-background animate-fade-in">
       <div className="flex flex-1 flex-col md:flex-row">
         {/* Left side - Login Form */}
         <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 flex items-center justify-center">
-          <div className="w-full max-w-md space-y-8">
+          <div className="w-full max-w-md space-y-8 hover-lift">
             <div className="flex flex-col items-center text-center mb-8">
               <Link to="/" className="flex items-center gap-2 mb-6 group">
                 <Archive className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />
                 <span className="text-2xl font-bold tracking-tight">TimeVault</span>
               </Link>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome back</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight gradient-text">Welcome back</h1>
               <p className="text-muted-foreground mt-2">
                 Enter your credentials to access your account
               </p>
@@ -120,14 +118,17 @@ const Login = () => {
                   <span>Library</span>
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="timevault" className="mt-2">
+              <TabsContent value="timevault" className="mt-2 animate-fade-in">
                 <div className="text-sm text-muted-foreground">
                   Sign in to access academic documents, time-locked vaults, and verification tools.
                 </div>
               </TabsContent>
-              <TabsContent value="library" className="mt-2">
+              <TabsContent value="library" className="mt-2 animate-fade-in">
                 <div className="text-sm text-muted-foreground">
                   Sign in to access the digital library resources, academic publications, and research materials.
+                </div>
+                <div className="mt-2 text-xs bg-primary/5 p-2 rounded-md border border-primary/10">
+                  <span className="font-medium text-primary/80">Quick Access:</span> Default credentials are pre-filled for library access.
                 </div>
               </TabsContent>
             </Tabs>
@@ -145,8 +146,8 @@ const Login = () => {
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input 
                             {...field} 
-                            placeholder={activeTab === "library" ? "you@library.com" : "you@example.com"} 
-                            className="pl-10"
+                            placeholder={activeTab === "library" ? "librarian@library.com" : "you@example.com"} 
+                            className="pl-10 glass-input"
                             type="email"
                             onChange={(e) => {
                               field.onChange(e);
@@ -191,6 +192,7 @@ const Login = () => {
                             {...field}
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
+                            className="glass-input"
                           />
                         </div>
                       </FormControl>
@@ -201,7 +203,7 @@ const Login = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white dark:text-primary-foreground" 
+                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-700 text-white dark:text-primary-foreground hover-lift" 
                   disabled={isLoading}
                   size="lg"
                 >
@@ -221,14 +223,14 @@ const Login = () => {
                 <div className="text-sm text-center">
                   <span className="text-muted-foreground">
                     Don't have an account?{" "}
-                    <Link to="/signup" className="text-primary hover:underline">
+                    <Link to="/signup" className="text-primary hover:underline story-link">
                       Sign up
                     </Link>
                   </span>
                 </div>
 
                 {/* Demo credentials */}
-                <div className="bg-secondary/30 dark:bg-secondary/10 rounded-lg p-4 text-sm space-y-2">
+                <div className="glass-card p-4 text-sm space-y-2 dark:bg-card/20 transition-all duration-300">
                   <p className="font-medium">Demo Credentials:</p>
                   <p><span className="opacity-70">Student:</span> student@example.com / password123</p>
                   <p><span className="opacity-70">Faculty:</span> faculty@example.com / password123</p>
@@ -246,36 +248,36 @@ const Login = () => {
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
             <div className="w-full max-w-md space-y-6">
               {activeTab === "timevault" ? (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6">
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6 animate-fade-in">
                   <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
                   <p className="text-base opacity-90 mb-6">
                     Securely preserve and schedule the release of important academic documents
                     with TimeVault's time-locked digital vaults and blockchain verification.
                   </p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
                       <div className="font-medium mb-1">For Students</div>
                       <p className="opacity-80">Access time-released course materials and submit assignments</p>
                     </div>
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
                       <div className="font-medium mb-1">For Faculty</div>
                       <p className="opacity-80">Upload documents and schedule their release to students</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6">
-                  <h2 className="text-2xl font-bold mb-4 text-center">Digital Library</h2>
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6 animate-fade-in">
+                  <h2 className="text-2xl font-bold mb-4 text-center gradient-text">Digital Library</h2>
                   <p className="text-base opacity-90 mb-6">
                     Access a comprehensive collection of academic resources, research publications,
                     and digital materials across multiple disciplines.
                   </p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
                       <div className="font-medium mb-1">Diverse Subjects</div>
                       <p className="opacity-80">Browse resources across various academic disciplines</p>
                     </div>
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg">
+                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
                       <div className="font-medium mb-1">Digital Archives</div>
                       <p className="opacity-80">Access journals, articles, and research materials</p>
                     </div>
@@ -286,24 +288,24 @@ const Login = () => {
               {activeTab === "timevault" ? (
                 <BlockchainVerification />
               ) : (
-                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl">
+                <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl animate-fade-in">
                   <h2 className="text-xl font-bold mb-3">Discover Academic Resources</h2>
                   <div className="space-y-4">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 hover-lift">
                       <BookOpen className="w-5 h-5 text-primary mt-0.5" />
                       <div>
                         <h3 className="font-medium">Academic Publications</h3>
                         <p className="text-sm opacity-80">Access journals, textbooks, and reference materials</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 hover-lift">
                       <GraduationCap className="w-5 h-5 text-primary mt-0.5" />
                       <div>
                         <h3 className="font-medium">Specialized Collections</h3>
                         <p className="text-sm opacity-80">Browse resources by subject area and field of study</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 hover-lift">
                       <Shield className="w-5 h-5 text-primary mt-0.5" />
                       <div>
                         <h3 className="font-medium">Secure Access</h3>

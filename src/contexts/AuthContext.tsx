@@ -75,7 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // Initialize user-specific data
+        initializeUserData(parsedUser.id);
+        
+        console.log("User session restored:", parsedUser.email);
       } catch (error) {
         console.error("Failed to parse stored user:", error);
         localStorage.removeItem("timeVaultUser");
@@ -139,11 +145,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update state
       setUser(userWithoutPassword);
       
+      // Determine redirect path based on email domain
+      const redirectPath = getDashboardPath(email);
+      
       // Show success toast
       toast.success(`Welcome back, ${foundUser.name}!`);
       
-      // Redirect based on email domain or user role
-      const redirectPath = email.endsWith('@library.com') ? '/librarian' : '/dashboard';
+      // Redirect to appropriate dashboard
       navigate(redirectPath);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
