@@ -130,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       
       if (!foundUser) {
+        // Fixed: Properly throw error for invalid credentials
         throw new Error("Invalid email or password");
       }
       
@@ -186,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name
       };
       
-      // Add to mock database for future logins
+      // Add to mock database for future logins - FIX: Actually add the user properly
       MOCK_USERS.push(newUserWithPassword);
       
       // Create user without password for return

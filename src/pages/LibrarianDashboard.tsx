@@ -10,7 +10,8 @@ import {
   BookMarked, RefreshCw, Filter, DownloadCloud, Archive, FileVideo, BookCopy, 
   Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit, Newspaper,
   CheckCircle, History, AlertCircle, UploadCloud, Calendar, ListFilter, BookOpenCheck,
-  Library, UserCheck, ClipboardCheck, Printer, ArrowLeft, RotateCcw, CheckSquare
+  Library, UserCheck, ClipboardCheck, Printer, ArrowLeft, RotateCcw, CheckSquare,
+  ArrowUp, ArrowDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Interface for library books
 interface LibraryBook {
@@ -827,8 +829,3 @@ const LibrarianDashboard = () => {
   const handleEditSave = () => {
     if (!currentBook || !newBook.title || !newBook.author) {
       toast.error("Title and author are required");
-      return;
-    }
-    
-    // Update book
-    const updatedBooks =
