@@ -49,12 +49,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       )}
       
       {/* Pass sidebarOpen state to the ResponsiveSidebar */}
-      <ResponsiveSidebar />
+      <ResponsiveSidebar 
+        isOpen={sidebarOpen} 
+        setIsOpen={setSidebarOpen}
+      />
       
       <div className="flex-1 flex flex-col">
         <Header />
         
-        <main className="flex-1 pt-16 md:pt-20 pb-16 md:pb-20">
+        <main className="flex-1 pt-16 md:pt-20 pb-16 md:pb-20 overflow-x-hidden">
           <div className="container px-4 md:px-6">
             {/* Desktop sidebar toggle button */}
             {!isMobile && (
@@ -88,7 +91,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Button>
             )}
             
-            {children || <Outlet />}
+            <div className="w-full overflow-x-auto">
+              {children || <Outlet />}
+            </div>
           </div>
         </main>
         
