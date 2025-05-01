@@ -511,7 +511,12 @@ const Library = () => {
                   <p className="text-muted-foreground mb-6">
                     Browse the library and get tickets for books you want to check out
                   </p>
-                  <Button variant="outline" onClick={() => document.querySelector('button[value="books"]')?.click()}>
+                  <Button variant="outline" onClick={() => {
+                    const element = document.querySelector('button[value="books"]');
+                    if (element) {
+                      (element as HTMLElement).click();
+                    }
+                  }}>
                     Browse Books
                   </Button>
                 </div>

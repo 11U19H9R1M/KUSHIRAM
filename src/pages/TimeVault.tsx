@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -220,7 +219,12 @@ const TimeVault = () => {
                   {searchQuery ? "Try adjusting your search terms" : "There are no recordings available yet"}
                 </p>
                 {isFaculty && (
-                  <Button onClick={() => document.querySelector('button[value="upload"]')?.click()}>
+                  <Button onClick={() => {
+                    const element = document.querySelector('button[value="upload"]');
+                    if (element) {
+                      (element as HTMLElement).click();
+                    }
+                  }}>
                     <Upload className="h-4 w-4 mr-2" />
                     Upload a Recording
                   </Button>
