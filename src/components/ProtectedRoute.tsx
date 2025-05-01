@@ -27,8 +27,24 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   // If allowedRoles is defined and user's role is not included, redirect to appropriate dashboard
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // Librarians go to library, everyone else to dashboard
-    const redirectPath = user.role === "librarian" ? "/library" : "/dashboard";
+    let redirectPath = '/dashboard';
+    
+    // Determine correct dashboard based on role
+    switch (user.role) {
+      case "librarian":
+        redirectPath = "/librarian";
+        break;
+      case "faculty":
+        redirectPath = "/faculty-dashboard";
+        break;
+      case "student":
+        redirectPath = "/student-dashboard";
+        break;
+      case "admin":
+        redirectPath = "/admin-dashboard";
+        break;
+    }
+    
     return <Navigate to={redirectPath} replace />;
   }
 

@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop, BookOpen, GraduationCap } from "lucide-react";
+import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop, BookOpen, GraduationCap, Lock, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -21,11 +21,12 @@ import Footer from "@/components/Footer";
 import BlockchainVerification from "@/components/BlockchainVerification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Define form schema
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -34,9 +35,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("timevault");
+  const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, getDashboardPath } = useAuth();
+  const { login } = useAuth();
 
   // Initialize form
   const form = useForm<FormData>({
@@ -57,14 +59,30 @@ const Login = () => {
     }
   }, [form.watch("email")]);
 
+  // Clear login error when form values change
+  useEffect(() => {
+    if (loginError) {
+      const subscription = form.watch(() => {
+        setLoginError(null);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form, loginError]);
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
+    setLoginError(null);
+    
     try {
       await login(data.email, data.password);
       // Navigation is handled in AuthContext
     } catch (error) {
       console.error(error);
-      toast.error("Login failed. Please check your credentials.");
+      if (error instanceof Error) {
+        setLoginError(error.message);
+      } else {
+        setLoginError("Login failed. Please check your credentials.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +150,14 @@ const Login = () => {
                 </div>
               </TabsContent>
             </Tabs>
+            
+            {loginError && (
+              <Alert variant="destructive" className="animate-shake">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Authentication Failed</AlertTitle>
+                <AlertDescription>{loginError}</AlertDescription>
+              </Alert>
+            )}
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -174,6 +200,7 @@ const Login = () => {
                       <FormLabel>Password</FormLabel>
                       <FormControl>
                         <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Button
                             type="button"
                             variant="ghost"
@@ -192,7 +219,7 @@ const Login = () => {
                             {...field}
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="glass-input"
+                            className="glass-input pl-10"
                           />
                         </div>
                       </FormControl>
@@ -227,6 +254,15 @@ const Login = () => {
                       Sign up
                     </Link>
                   </span>
+                </div>
+
+                {/* Security Information */}
+                <div className="bg-muted/50 p-3 rounded-lg text-xs space-y-2 border border-border">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Secure Login</span>
+                  </div>
+                  <p className="text-muted-foreground">Your connection to this site is encrypted and your credentials are securely stored.</p>
                 </div>
 
                 {/* Demo credentials */}

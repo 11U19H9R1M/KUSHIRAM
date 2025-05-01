@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { z } from "zod";
 
 // Define user roles
 export type UserRole = "student" | "faculty" | "admin" | "librarian";
@@ -13,6 +14,8 @@ export interface User {
   role: UserRole;
   name: string;
   profileImage?: string;
+  lastLogin?: Date;
+  accountCreated?: Date;
 }
 
 interface AuthContextType {
@@ -24,42 +27,68 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   verifyDocumentHash: (hash: string) => Promise<boolean>;
-  getDashboardPath: (email: string) => string;
+  getDashboardPath: (role: UserRole) => string;
+  validatePassword: (password: string) => { isValid: boolean; message?: string };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Password validation schema
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
 
 // Mock database of users (in a real app, this would be in a real database)
 const MOCK_USERS = [
   {
     id: "1",
     email: "student@example.com",
-    password: "password123",
+    password: "password123", // In a real app, this would be hashed
     role: "student" as UserRole,
-    name: "John Student"
+    name: "John Student",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-01-15")
   },
   {
     id: "2",
     email: "faculty@example.com",
     password: "password123",
     role: "faculty" as UserRole,
-    name: "Dr. Jane Faculty"
+    name: "Dr. Jane Faculty",
+    lastLogin: new Date(),
+    accountCreated: new Date("2022-08-10")
   },
   {
     id: "3",
     email: "admin@example.com",
     password: "password123",
     role: "admin" as UserRole,
-    name: "Admin User"
+    name: "Admin User",
+    lastLogin: new Date(),
+    accountCreated: new Date("2022-05-22")
   },
   {
     id: "4",
     email: "librarian@library.com",
     password: "password123",
     role: "librarian" as UserRole,
-    name: "Library Admin"
+    name: "Library Admin",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-03-05")
   }
 ];
+
+// Track login attempts for rate limiting
+const loginAttempts: Record<string, { count: number; lastAttempt: number }> = {};
+
+// Max failed login attempts before temporary lockout
+const MAX_LOGIN_ATTEMPTS = 5;
+// Lockout duration in milliseconds (15 minutes)
+const LOCKOUT_DURATION = 15 * 60 * 1000;
 
 // Simulated blockchain document hash store
 const DOCUMENT_HASHES: Record<string, { timestamp: number, owner: string }> = {};
@@ -91,12 +120,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  // Determine which dashboard to redirect to based on email domain or user role
-  const getDashboardPath = (email: string): string => {
-    if (email.endsWith('@library.com')) {
-      return '/librarian';
+  // Password validation function
+  const validatePassword = (password: string) => {
+    try {
+      passwordSchema.parse(password);
+      return { isValid: true };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return { isValid: false, message: error.errors[0].message };
+      }
+      return { isValid: false, message: "Invalid password format" };
     }
-    return '/dashboard';
+  };
+
+  // Determine which dashboard to redirect to based on user role
+  const getDashboardPath = (role: UserRole): string => {
+    switch (role) {
+      case "librarian":
+        return '/librarian';
+      case "faculty":
+        return '/faculty-dashboard';
+      case "student":
+        return '/student-dashboard';
+      case "admin":
+        return '/admin-dashboard';
+      default:
+        return '/dashboard';
+    }
   };
 
   // Initialize user data after login/signup
@@ -116,12 +166,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log(`Initialized data storage for user: ${userId}`);
   };
 
-  // Login function
+  // Login function with rate limiting
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
+      // Check for rate limiting
+      const userAttempts = loginAttempts[email] || { count: 0, lastAttempt: 0 };
+      const currentTime = Date.now();
+      
+      // Check if user is locked out
+      if (userAttempts.count >= MAX_LOGIN_ATTEMPTS && 
+          currentTime - userAttempts.lastAttempt < LOCKOUT_DURATION) {
+        const remainingLockout = Math.ceil((LOCKOUT_DURATION - (currentTime - userAttempts.lastAttempt)) / 60000);
+        throw new Error(`Too many failed login attempts. Please try again in ${remainingLockout} minutes.`);
+      }
+      
+      // Simulate API call latency
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Find user in mock database
@@ -130,9 +191,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       
       if (!foundUser) {
-        // Fixed: Properly throw error for invalid credentials
-        throw new Error("Invalid email or password");
+        // Record failed attempt
+        loginAttempts[email] = {
+          count: userAttempts.count + 1,
+          lastAttempt: currentTime
+        };
+        
+        // Show different message based on attempt count
+        if (loginAttempts[email].count >= MAX_LOGIN_ATTEMPTS) {
+          throw new Error(`Account temporarily locked. Please try again later.`);
+        } else {
+          throw new Error("Invalid email or password");
+        }
       }
+      
+      // Reset login attempts on successful login
+      loginAttempts[email] = { count: 0, lastAttempt: currentTime };
+      
+      // Update last login time
+      foundUser.lastLogin = new Date();
       
       // Remove password before storing
       const { password: _, ...userWithoutPassword } = foundUser;
@@ -146,8 +223,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update state
       setUser(userWithoutPassword);
       
-      // Determine redirect path based on email domain
-      const redirectPath = getDashboardPath(email);
+      // Determine redirect path based on role
+      const redirectPath = getDashboardPath(foundUser.role);
       
       // Show success toast
       toast.success(`Welcome back, ${foundUser.name}!`);
@@ -162,11 +239,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Signup function
+  // Signup function with enhanced validation
   const signup = async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     
     try {
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error("Please enter a valid email address");
+      }
+      
+      // Validate password strength
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.message || "Password does not meet security requirements");
+      }
+      
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
       
@@ -182,12 +270,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newUserWithPassword = {
         id: newUserId,
         email,
-        password,
+        password, // In a real app, this would be hashed with bcrypt
         role,
-        name
+        name,
+        accountCreated: new Date(),
+        lastLogin: new Date()
       };
       
-      // Add to mock database for future logins - FIX: Actually add the user properly
+      // Add to mock database for future logins
       MOCK_USERS.push(newUserWithPassword);
       
       // Create user without password for return
@@ -255,7 +345,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       updateUser,
       verifyDocumentHash,
-      getDashboardPath
+      getDashboardPath,
+      validatePassword
     }}>
       {children}
     </AuthContext.Provider>
