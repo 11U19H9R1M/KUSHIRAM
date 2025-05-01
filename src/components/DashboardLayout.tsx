@@ -48,29 +48,26 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         />
       )}
       
-      {/* Pass sidebarOpen state to the ResponsiveSidebar */}
-      <ResponsiveSidebar 
-        isOpen={sidebarOpen} 
-        setIsOpen={setSidebarOpen}
-      />
+      {/* ResponsiveSidebar component - remove props that aren't accepted */}
+      <ResponsiveSidebar />
       
       <div className="flex-1 flex flex-col">
         <Header />
         
         <main className="flex-1 pt-16 md:pt-20 pb-16 md:pb-20 overflow-x-hidden">
           <div className="container px-4 md:px-6">
-            {/* Desktop sidebar toggle button */}
+            {/* Desktop sidebar toggle button - simplified design */}
             {!isMobile && (
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mb-4 -ml-2"
+                className="mb-4 -ml-2 hover:bg-primary/10"
               >
                 {sidebarOpen ? (
                   <>
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    <span>Collapse sidebar</span>
+                    <span>Collapse</span>
                   </>
                 ) : (
                   <Menu className="h-4 w-4" />
@@ -78,21 +75,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Button>
             )}
             
-            {/* Mobile menu button */}
+            {/* Mobile menu button - more minimal design */}
             {isMobile && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mb-4 -ml-2 fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-md rounded-full p-2 h-auto"
+                className="mb-4 -ml-2 fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-md rounded-full p-2 h-auto shadow-sm"
                 aria-label={sidebarOpen ? "Close menu" : "Open menu"}
               >
                 {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             )}
             
-            <div className="w-full overflow-x-auto">
-              {children || <Outlet />}
+            <div className="w-full overflow-x-auto pb-4">
+              <div className="glass-card p-6 rounded-xl shadow-sm">
+                {children || <Outlet />}
+              </div>
             </div>
           </div>
         </main>
