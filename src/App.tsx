@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,9 +19,10 @@ import Library from "./pages/Library";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 
 // Components
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth, UserRole } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { debugStorage } from "./lib/storage";
+import { useEffect } from "react";
 
 // Configure query client with better error handling
 const queryClient = new QueryClient({
@@ -68,6 +68,22 @@ const DebugComponent = () => {
   return null;
 };
 
+// Helper function to get the correct dashboard for a role
+const getDashboardForRole = (role: UserRole) => {
+  switch (role) {
+    case "librarian":
+      return "/librarian";
+    case "faculty":
+      return "/faculty-dashboard";
+    case "student":
+      return "/student-dashboard";
+    case "admin":
+      return "/admin-dashboard";
+    default:
+      return "/dashboard";
+  }
+};
+
 // Auth Guard component that redirects authenticated users away from login/signup pages
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -89,114 +105,84 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Helper function to get the correct dashboard for a role
-const getDashboardForRole = (role: UserRole) => {
-  switch (role) {
-    case "librarian":
-      return "/librarian";
-    case "faculty":
-      return "/faculty-dashboard";
-    case "student":
-      return "/student-dashboard";
-    case "admin":
-      return "/admin-dashboard";
-    default:
-      return "/dashboard";
-  }
-};
-
-// Component to handle public routes - redirects to login if not authenticated
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Faculty-only route component
-const FacultyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (user && (user.role === "faculty" || user.role === "admin")) {
-    return <>{children}</>;
-  }
-
-  // Redirect to the appropriate dashboard
-  return <Navigate to={user ? getDashboardForRole(user.role) : "/login"} replace />;
-};
-
-// Student-only route component
-const StudentRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (user && user.role === "student") {
-    return <>{children}</>;
-  }
-
-  // Redirect to the appropriate dashboard
-  return <Navigate to={user ? getDashboardForRole(user.role) : "/login"} replace />;
-};
-
-// Special route for librarians
-const LibrarianRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (user && user.role === "librarian") {
-    return <>{children}</>;
-  }
-
-  return <Navigate to={user ? getDashboardForRole(user.role) : "/login"} replace />;
+// Routes configuration component - this ensures all route components have access to AuthContext
+const AppRoutes = () => {
+  return (
+    <AuthProvider>
+      <ScrollToTop />
+      <DebugComponent />
+      <Routes>
+        <Route path="/login" element={
+          <AuthGuard>
+            <Login />
+          </AuthGuard>
+        } />
+        <Route path="/signup" element={
+          <AuthGuard>
+            <Signup />
+          </AuthGuard>
+        } />
+        
+        <Route path="/about" element={
+          <ProtectedRoute>
+            <About />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/" element={
+          <Index />
+        } />
+        
+        <Route path="/library" element={
+          <ProtectedRoute allowedRoles={["librarian", "admin", "faculty", "student"]}>
+            <Library />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/librarian" element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <LibrarianDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/faculty-dashboard" element={
+          <ProtectedRoute allowedRoles={["faculty", "admin"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/student-dashboard" element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/create" element={
+          <ProtectedRoute allowedRoles={["faculty", "admin"]}>
+            <Create />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/capsule/:id" element={
+          <ProtectedRoute>
+            <ViewCapsule />
+          </ProtectedRoute>
+        } />
+        <Route path="/graduation-memories" element={
+          <ProtectedRoute>
+            <GraduationMemories />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AuthProvider>
+  );
 };
 
 const App = () => (
@@ -206,86 +192,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <ScrollToTop />
-            <DebugComponent />
-            <Routes>
-              <Route path="/login" element={
-                <AuthGuard>
-                  <Login />
-                </AuthGuard>
-              } />
-              <Route path="/signup" element={
-                <AuthGuard>
-                  <Signup />
-                </AuthGuard>
-              } />
-              
-              <Route path="/about" element={
-                <PublicRoute>
-                  <About />
-                </PublicRoute>
-              } />
-              
-              <Route path="/" element={
-                <Index />
-              } />
-              
-              <Route path="/library" element={
-                <ProtectedRoute allowedRoles={["librarian", "admin", "faculty", "student"]}>
-                  <Library />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/librarian" element={
-                <LibrarianRoute>
-                  <LibrarianDashboard />
-                </LibrarianRoute>
-              } />
-              
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/faculty-dashboard" element={
-                <FacultyRoute>
-                  <Dashboard />
-                </FacultyRoute>
-              } />
-              
-              <Route path="/student-dashboard" element={
-                <StudentRoute>
-                  <Dashboard />
-                </StudentRoute>
-              } />
-              
-              <Route path="/create" element={
-                <ProtectedRoute allowedRoles={["faculty", "admin"]}>
-                  <Create />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/capsule/:id" element={
-                <ProtectedRoute>
-                  <ViewCapsule />
-                </ProtectedRoute>
-              } />
-              <Route path="/graduation-memories" element={
-                <ProtectedRoute>
-                  <GraduationMemories />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+          <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
 
-import { useEffect } from "react";
-import { useAuth, UserRole } from "./contexts/AuthContext";
 export default App;

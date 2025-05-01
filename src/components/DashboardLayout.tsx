@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ResponsiveSidebar from "@/components/ResponsiveSidebar";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, ChevronLeft, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -16,6 +17,15 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isMobile = useIsMobile();
+  const { isAuthenticated } = useAuth(); // Add auth check
+  const navigate = useNavigate();
+  
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
   
   // On mobile, sidebar is closed by default
   useEffect(() => {
@@ -48,7 +58,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         />
       )}
       
-      {/* ResponsiveSidebar component - remove props that aren't accepted */}
+      {/* ResponsiveSidebar component */}
       <ResponsiveSidebar />
       
       <div className="flex-1 flex flex-col">
