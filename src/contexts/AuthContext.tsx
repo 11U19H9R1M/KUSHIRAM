@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SHARED_ACCOUNTS } from "@/lib/storage";
 
 // Define user roles
 export type UserRole = "student" | "faculty" | "admin" | "librarian";
@@ -47,7 +48,7 @@ const MOCK_USERS = [
   {
     id: "1",
     email: "student@example.com",
-    password: "password123", // In a real app, this would be hashed
+    password: "Password123!", // In a real app, this would be hashed
     role: "student" as UserRole,
     name: "John Student",
     lastLogin: new Date(),
@@ -56,7 +57,7 @@ const MOCK_USERS = [
   {
     id: "2",
     email: "faculty@example.com",
-    password: "password123",
+    password: "Password123!",
     role: "faculty" as UserRole,
     name: "Dr. Jane Faculty",
     lastLogin: new Date(),
@@ -65,7 +66,7 @@ const MOCK_USERS = [
   {
     id: "3",
     email: "admin@example.com",
-    password: "password123",
+    password: "Password123!",
     role: "admin" as UserRole,
     name: "Admin User",
     lastLogin: new Date(),
@@ -74,11 +75,30 @@ const MOCK_USERS = [
   {
     id: "4",
     email: "librarian@library.com",
-    password: "password123",
+    password: "Password123!",
     role: "librarian" as UserRole,
     name: "Library Admin",
     lastLogin: new Date(),
     accountCreated: new Date("2023-03-05")
+  },
+  // Add default dummy accounts
+  {
+    id: SHARED_ACCOUNTS.faculty.id,
+    email: SHARED_ACCOUNTS.faculty.email,
+    password: "Password123!",
+    role: "faculty" as UserRole,
+    name: "Shared Faculty Account",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-01-01")
+  },
+  {
+    id: SHARED_ACCOUNTS.student.id,
+    email: SHARED_ACCOUNTS.student.email,
+    password: "Password123!",
+    role: "student" as UserRole,
+    name: "Shared Student Account",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-01-01")
   }
 ];
 
@@ -161,6 +181,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userCapsules = localStorage.getItem(`${userPrefix}academicDocuments`);
     if (!userCapsules) {
       localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify([]));
+    }
+    
+    // Initialize empty tickets array if not exists
+    const userTickets = localStorage.getItem(`${userPrefix}libraryTickets`);
+    if (!userTickets) {
+      localStorage.setItem(`${userPrefix}libraryTickets`, JSON.stringify([]));
     }
     
     console.log(`Initialized data storage for user: ${userId}`);

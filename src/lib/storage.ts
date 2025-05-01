@@ -1,14 +1,32 @@
+
 import { toast } from "sonner";
+
+// Define shared dummy accounts for global access
+export const SHARED_ACCOUNTS = {
+  faculty: {
+    email: "faculty@example.com",
+    id: "shared_faculty"
+  },
+  student: {
+    email: "student@example.com",
+    id: "shared_student"
+  }
+};
 
 /**
  * Gets the current user prefix for storage
+ * Modified to allow reading from shared accounts
  */
-const getCurrentUserPrefix = (): string => {
+const getCurrentUserPrefix = (forShared: boolean = false): string => {
+  if (forShared) {
+    return "shared_"; // Use a shared prefix for cross-user access
+  }
   return localStorage.getItem("currentUserPrefix") || "";
 };
 
 /**
  * Save document data to localStorage with user prefix
+ * Modified to also save to shared storage for cross-user visibility
  */
 export const saveCapsule = (documentData: any): boolean => {
   try {
@@ -66,6 +84,10 @@ export const saveCapsule = (documentData: any): boolean => {
     // Save back to localStorage with user prefix
     localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify(documents));
     
+    // ALSO SAVE TO SHARED STORAGE for cross-user visibility
+    // This enables faculty uploads to be visible to students and vice versa
+    saveToSharedStorage(documentData);
+    
     // Log success message for debugging
     console.log(`Document saved successfully with ID: ${documentData.id} for user prefix: ${userPrefix}`);
     
@@ -77,24 +99,71 @@ export const saveCapsule = (documentData: any): boolean => {
 };
 
 /**
+ * Helper function to save documents to shared storage
+ */
+const saveToSharedStorage = (documentData: any): boolean => {
+  try {
+    // Get shared prefix
+    const sharedPrefix = getCurrentUserPrefix(true);
+    
+    // Get existing documents from shared storage
+    const sharedData = localStorage.getItem(`${sharedPrefix}academicDocuments`);
+    const sharedDocuments = sharedData ? JSON.parse(sharedData) : [];
+    
+    // Check if document already exists in shared storage
+    const existingIndex = sharedDocuments.findIndex((c: any) => c.id === documentData.id);
+    
+    if (existingIndex !== -1) {
+      // Update existing document
+      sharedDocuments[existingIndex] = documentData;
+    } else {
+      // Add new document
+      sharedDocuments.push(documentData);
+    }
+    
+    // Save back to localStorage with shared prefix
+    localStorage.setItem(`${sharedPrefix}academicDocuments`, JSON.stringify(sharedDocuments));
+    
+    console.log(`Document also saved to shared storage with ID: ${documentData.id}`);
+    
+    return true;
+  } catch (error) {
+    console.error("Error saving document to shared storage:", error);
+    return false;
+  }
+};
+
+/**
  * Get all documents from localStorage for current user
+ * Modified to include documents from shared storage for cross-user visibility
  */
 export const getAllCapsules = () => {
   try {
     const userPrefix = getCurrentUserPrefix();
+    const sharedPrefix = getCurrentUserPrefix(true);
     
     // Get from user-specific storage
-    const data = localStorage.getItem(`${userPrefix}academicDocuments`);
+    const userData = localStorage.getItem(`${userPrefix}academicDocuments`);
+    const userDocuments = userData ? JSON.parse(userData) : [];
     
-    // If no data exists
-    if (!data) {
-      console.log(`No documents found for user prefix: ${userPrefix}`);
-      return [];
-    }
+    // Get from shared storage
+    const sharedData = localStorage.getItem(`${sharedPrefix}academicDocuments`);
+    const sharedDocuments = sharedData ? JSON.parse(sharedData) : [];
     
-    const parsedData = JSON.parse(data);
-    console.log(`Found ${parsedData.length} documents in storage for user prefix: ${userPrefix}`);
-    return parsedData;
+    // Combine documents, ensuring no duplicates (prioritize user's own documents)
+    const combinedDocuments = [...userDocuments];
+    
+    // Add shared documents that don't already exist in user documents
+    sharedDocuments.forEach((sharedDoc: any) => {
+      const exists = combinedDocuments.some((userDoc: any) => userDoc.id === sharedDoc.id);
+      if (!exists) {
+        combinedDocuments.push(sharedDoc);
+      }
+    });
+    
+    console.log(`Found ${combinedDocuments.length} documents in total (${userDocuments.length} user-specific, ${sharedDocuments.length} shared)`);
+    
+    return combinedDocuments;
   } catch (error) {
     console.error("Error retrieving documents:", error);
     toast.error("Failed to load your academic documents");
@@ -104,16 +173,30 @@ export const getAllCapsules = () => {
 
 /**
  * Get a specific document by ID for current user
+ * Modified to check shared storage if not found in user storage
  */
 export const getCapsuleById = (id: string) => {
   try {
-    const documents = getAllCapsules();
-    const document = documents.find((doc: any) => doc.id === id);
+    // First check user's own documents
+    const userPrefix = getCurrentUserPrefix();
+    const userData = localStorage.getItem(`${userPrefix}academicDocuments`);
+    const userDocuments = userData ? JSON.parse(userData) : [];
     
-    if (document) {
-      console.log(`Found document with ID: ${id} for current user`);
+    let document = userDocuments.find((doc: any) => doc.id === id);
+    
+    // If not found in user's documents, check shared storage
+    if (!document) {
+      const sharedPrefix = getCurrentUserPrefix(true);
+      const sharedData = localStorage.getItem(`${sharedPrefix}academicDocuments`);
+      const sharedDocuments = sharedData ? JSON.parse(sharedData) : [];
+      
+      document = sharedDocuments.find((doc: any) => doc.id === id);
+      
+      if (document) {
+        console.log(`Document with ID: ${id} found in shared storage`);
+      }
     } else {
-      console.log(`No document found with ID: ${id} for current user`);
+      console.log(`Document with ID: ${id} found in user's storage`);
     }
     
     return document || null;
@@ -125,6 +208,7 @@ export const getCapsuleById = (id: string) => {
 
 /**
  * Delete a document by ID for current user
+ * Modified to remove from shared storage if faculty user
  */
 export const deleteCapsule = (id: string): boolean => {
   try {
@@ -132,7 +216,17 @@ export const deleteCapsule = (id: string): boolean => {
     const documents = getAllCapsules();
     const filteredDocuments = documents.filter((doc: any) => doc.id !== id);
     localStorage.setItem(`${userPrefix}academicDocuments`, JSON.stringify(filteredDocuments));
-    console.log(`Document with ID: ${id} deleted successfully for user prefix: ${userPrefix}`);
+    
+    // Also remove from shared storage
+    const sharedPrefix = getCurrentUserPrefix(true);
+    const sharedData = localStorage.getItem(`${sharedPrefix}academicDocuments`);
+    if (sharedData) {
+      const sharedDocuments = JSON.parse(sharedData);
+      const filteredShared = sharedDocuments.filter((doc: any) => doc.id !== id);
+      localStorage.setItem(`${sharedPrefix}academicDocuments`, JSON.stringify(filteredShared));
+    }
+    
+    console.log(`Document with ID: ${id} deleted successfully from both user and shared storage`);
     return true;
   } catch (error) {
     console.error("Error deleting document:", error);
@@ -260,11 +354,17 @@ export const debugStorage = () => {
     const userDocs = localStorage.getItem(`${userPrefix}academicDocuments`);
     console.log(`User documents (${userPrefix}academicDocuments):`, userDocs ? JSON.parse(userDocs).length + " items" : "null");
     
+    // Check shared documents
+    const sharedPrefix = getCurrentUserPrefix(true);
+    const sharedDocs = localStorage.getItem(`${sharedPrefix}academicDocuments`);
+    console.log(`Shared documents (${sharedPrefix}academicDocuments):`, sharedDocs ? JSON.parse(sharedDocs).length + " items" : "null");
+    
     console.log("--- End Debug Information ---");
     
     return {
       userPrefix,
       userDocuments: userDocs ? JSON.parse(userDocs) : null,
+      sharedDocuments: sharedDocs ? JSON.parse(sharedDocs) : null,
       allKeys: Object.keys(localStorage)
     };
   } catch (error) {

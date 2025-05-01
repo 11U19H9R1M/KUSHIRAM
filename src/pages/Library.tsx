@@ -1,14 +1,15 @@
-
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap, BookA, Newspaper, Lock, FileText, Book as BookIcon, Archive, FileVideo, BookCopy, Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit } from "lucide-react";
+import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap, BookA, Newspaper, Lock, FileText, Book as BookIcon, Archive, FileVideo, BookCopy, Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 // Updated categories for books
 const bookCategories = [
@@ -146,15 +147,42 @@ const recentVideos = [
   }
 ];
 
+// New state for library tickets
+interface LibraryTicket {
+  id: string;
+  bookTitle: string;
+  issueDate: Date;
+  status: "pending" | "collected" | "returned";
+  pickupLocation: string;
+  bookId: string;
+}
+
 const Library = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCategories, setFilteredCategories] = useState(bookCategories);
+  const [showTicketDialog, setShowTicketDialog] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<any>(null);
+  const [tickets, setTickets] = useState<LibraryTicket[]>([]);
   
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    
+    // Load existing tickets from localStorage
+    const storedTickets = localStorage.getItem(`user_${user?.id}_libraryTickets`);
+    if (storedTickets) {
+      try {
+        const parsedTickets = JSON.parse(storedTickets);
+        setTickets(parsedTickets.map((ticket: any) => ({
+          ...ticket,
+          issueDate: new Date(ticket.issueDate)
+        })));
+      } catch (error) {
+        console.error("Error loading tickets:", error);
+      }
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     // Filter categories based on search query
@@ -173,6 +201,70 @@ const Library = () => {
     e.preventDefault();
     // Search functionality is already handled by the useEffect above
   };
+  
+  const handleCheckout = (bookInfo: any) => {
+    setSelectedBook(bookInfo);
+    setShowTicketDialog(true);
+  };
+  
+  const generateTicket = () => {
+    if (!selectedBook) return;
+    
+    const newTicket: LibraryTicket = {
+      id: `ticket_${Date.now()}`,
+      bookTitle: selectedBook.title,
+      issueDate: new Date(),
+      status: "pending", 
+      pickupLocation: "Main Library Desk",
+      bookId: selectedBook.id || `book_${Date.now()}`
+    };
+    
+    // Add ticket to state
+    const updatedTickets = [...tickets, newTicket];
+    setTickets(updatedTickets);
+    
+    // Save to localStorage
+    localStorage.setItem(
+      `user_${user?.id}_libraryTickets`, 
+      JSON.stringify(updatedTickets)
+    );
+    
+    // Close dialog
+    setShowTicketDialog(false);
+    
+    // Show success toast
+    toast.success(
+      `Ticket generated for "${selectedBook.title}". Please collect the book from the library desk.`,
+      {
+        duration: 5000,
+      }
+    );
+  };
+
+  // Define sample books for each category
+  const sampleBooks = [
+    {
+      id: "book1",
+      title: "Introduction to Machine Learning",
+      author: "Dr. Alan Turing",
+      category: "Computer Science",
+      available: true
+    },
+    {
+      id: "book2",
+      title: "Circuit Analysis Fundamentals",
+      author: "Prof. Marie Curie",
+      category: "Electrical Engineering",
+      available: true
+    },
+    {
+      id: "book3",
+      title: "Structural Mechanics",
+      author: "Dr. Isaac Newton",
+      category: "Civil Engineering",
+      available: false
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -198,8 +290,8 @@ const Library = () => {
                   Video Lectures
                 </Badge>
                 <Badge variant="outline" className="bg-primary/10 border-primary/20">
-                  <Archive className="h-3 w-3 mr-1" />
-                  Archives
+                  <Ticket className="h-3 w-3 mr-1" />
+                  Library Tickets
                 </Badge>
               </div>
             </div>
@@ -222,21 +314,26 @@ const Library = () => {
           </form>
           
           <Tabs defaultValue="subjects" className="w-full mb-8">
-            <TabsList className="grid grid-cols-3 mb-6 w-full md:w-fit">
+            <TabsList className="grid grid-cols-4 mb-6 w-full md:w-fit">
               <TabsTrigger value="subjects" className="flex items-center gap-2">
                 <Book className="h-4 w-4" />
                 <span className="hidden sm:inline">Categories</span>
                 <span className="sm:hidden">Categories</span>
+              </TabsTrigger>
+              <TabsTrigger value="books" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Books</span>
+                <span className="sm:hidden">Books</span>
               </TabsTrigger>
               <TabsTrigger value="videos" className="flex items-center gap-2">
                 <Video className="h-4 w-4" />
                 <span className="hidden sm:inline">Video Lectures</span>
                 <span className="sm:hidden">Videos</span>
               </TabsTrigger>
-              <TabsTrigger value="bookmarks" className="flex items-center gap-2">
-                <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">My Bookmarks</span>
-                <span className="sm:hidden">Saved</span>
+              <TabsTrigger value="tickets" className="flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                <span className="hidden sm:inline">My Tickets</span>
+                <span className="sm:hidden">Tickets</span>
               </TabsTrigger>
             </TabsList>
             
@@ -264,7 +361,7 @@ const Library = () => {
                           <span>{category.videos} Videos</span>
                         </div>
                       </div>
-                      <Button className="w-full">Browse Resources</Button>
+                      <Button className="w-full" onClick={() => document.querySelector('button[value="books"]')?.click()}>Browse Resources</Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -279,6 +376,47 @@ const Library = () => {
                   </p>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="books">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sampleBooks.map((book) => (
+                  <Card key={book.id} className="hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader>
+                      <CardTitle className="text-lg">{book.title}</CardTitle>
+                      <CardDescription>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Award className="h-4 w-4" />
+                          <span>{book.author}</span>
+                        </div>
+                        <Badge variant="outline" className="mt-2">
+                          {book.category}
+                        </Badge>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter className="flex justify-between items-center">
+                      <div className="text-sm">
+                        {book.available ? (
+                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                            Available
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+                            Checked Out
+                          </Badge>
+                        )}
+                      </div>
+                      <Button 
+                        onClick={() => handleCheckout(book)}
+                        disabled={!book.available}
+                      >
+                        <Ticket className="h-4 w-4 mr-2" />
+                        Get Ticket
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
             
             <TabsContent value="videos">
@@ -321,15 +459,63 @@ const Library = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="bookmarks">
-              <div className="p-8 text-center">
-                <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-medium mb-2">No bookmarks yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Save your favorite books and videos for easy access
-                </p>
-                <Button variant="outline">Browse Library</Button>
-              </div>
+            <TabsContent value="tickets">
+              {tickets.length > 0 ? (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold mb-4">Your Library Tickets</h3>
+                  {tickets.map((ticket) => (
+                    <Card key={ticket.id} className="overflow-hidden">
+                      <div className="flex border-l-4 border-primary">
+                        <div className="p-4 flex-1">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <div>
+                              <h3 className="font-medium text-lg">{ticket.bookTitle}</h3>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Ticket className="h-3 w-3" />
+                                  Ticket #{ticket.id.split('_')[1]}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {ticket.issueDate.toLocaleDateString()}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Building className="h-3 w-3" />
+                                  {ticket.pickupLocation}
+                                </span>
+                              </div>
+                            </div>
+                            <Badge className={
+                              ticket.status === "pending" 
+                                ? "bg-amber-100 text-amber-800 border-amber-200"
+                                : ticket.status === "collected"
+                                ? "bg-blue-100 text-blue-800 border-blue-200" 
+                                : "bg-green-100 text-green-800 border-green-200"
+                            }>
+                              {ticket.status === "pending" 
+                                ? "Ready for Pickup" 
+                                : ticket.status === "collected" 
+                                ? "Collected" 
+                                : "Returned"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-medium mb-2">No library tickets yet</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Browse the library and get tickets for books you want to check out
+                  </p>
+                  <Button variant="outline" onClick={() => document.querySelector('button[value="books"]')?.click()}>
+                    Browse Books
+                  </Button>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
           
@@ -355,7 +541,15 @@ const Library = () => {
                         <span>Dr. Alan Turing</span>
                       </div>
                     </div>
-                    <Button className="w-full" size="sm" variant="outline">View Resource</Button>
+                    <Button className="w-full" size="sm" variant="outline" onClick={() => handleCheckout({
+                      id: "rec1",
+                      title: "Introduction to Machine Learning",
+                      author: "Dr. Alan Turing",
+                      category: "Computer Science",
+                      available: true
+                    })}>
+                      Get Book Ticket
+                    </Button>
                   </CardContent>
                 </Card>
                 
@@ -374,7 +568,15 @@ const Library = () => {
                         <span>Prof. Marie Curie</span>
                       </div>
                     </div>
-                    <Button className="w-full" size="sm" variant="outline">View Resource</Button>
+                    <Button className="w-full" size="sm" variant="outline" onClick={() => handleCheckout({
+                      id: "rec2",
+                      title: "Circuit Analysis Fundamentals",
+                      author: "Prof. Marie Curie",
+                      category: "Electrical Engineering",
+                      available: true
+                    })}>
+                      Get Book Ticket
+                    </Button>
                   </CardContent>
                 </Card>
                 
@@ -393,7 +595,15 @@ const Library = () => {
                         <span>Dr. Isaac Newton</span>
                       </div>
                     </div>
-                    <Button className="w-full" size="sm" variant="outline">View Resource</Button>
+                    <Button className="w-full" size="sm" variant="outline" onClick={() => handleCheckout({
+                      id: "rec3",
+                      title: "Structural Mechanics",
+                      author: "Dr. Isaac Newton",
+                      category: "Civil Engineering",
+                      available: true
+                    })}>
+                      Get Book Ticket
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -402,6 +612,56 @@ const Library = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Ticket Dialog */}
+      <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Library Ticket</DialogTitle>
+            <DialogDescription>
+              This ticket will allow you to pick up the physical book from the library.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedBook && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                  <Book className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{selectedBook.title}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedBook.author}</p>
+                  <Badge variant="outline" className="mt-1">{selectedBook.category}</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-2 border-t border-b py-4">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Pickup Location</span>
+                  <span className="font-medium">Main Library Desk</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Available Until</span>
+                  <span className="font-medium">End of Day</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Loan Period</span>
+                  <span className="font-medium">14 days</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTicketDialog(false)}>Cancel</Button>
+            <Button onClick={generateTicket}>
+              <Ticket className="h-4 w-4 mr-2" />
+              Generate Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

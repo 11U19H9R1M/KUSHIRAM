@@ -2,245 +2,194 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  Home, Menu, X, FileText, 
-  BookOpen, Award, Brain, 
-  Settings, User, LogOut,
-  Bell, Calendar, Plus 
+  LayoutDashboard, 
+  Library, 
+  GraduationCap, 
+  FileVideo, 
+  Plus, 
+  Settings, 
+  LogOut,
+  Archive,
+  CheckSquare
 } from "lucide-react";
+import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTheme } from "@/hooks/useTheme";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-interface MenuItem {
-  icon: React.ElementType;
-  label: string;
-  path: string;
-}
-
-interface MenuSection {
-  title: string;
-  items: MenuItem[];
-}
 
 const ResponsiveSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const { user, logout } = useAuth();
   const location = useLocation();
-  const { theme } = useTheme();
-
-  // Close sidebar when route changes on mobile
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  
+  // Update sidebar state based on screen size
   useEffect(() => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  }, [location, isMobile]);
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
-  // Close sidebar when ESC key is pressed
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
+  // Get current path for active state
+  const path = location.pathname;
+
+  // Define menu items based on user role
+  const getMenuItems = (role: UserRole | undefined) => {
+    const baseItems = [
+      {
+        label: "Dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        href: role ? getDashboardPath(role) : "/dashboard",
+        active: path === "/dashboard" || 
+                path === "/faculty-dashboard" || 
+                path === "/student-dashboard" || 
+                path === "/admin-dashboard"
+      },
+      {
+        label: "Library",
+        icon: <Library className="h-5 w-5" />,
+        href: "/library",
+        active: path === "/library"
+      },
+      {
+        label: "Time Vault",
+        icon: <FileVideo className="h-5 w-5" />,
+        href: "/time-vault",
+        active: path === "/time-vault"
+      },
+      {
+        label: "Graduation Memories",
+        icon: <GraduationCap className="h-5 w-5" />,
+        href: "/graduation-memories",
+        active: path === "/graduation-memories"
       }
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => {
-      window.removeEventListener("keydown", handleEsc);
-    };
-  }, []);
-
-  // Auto-close on mobile when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const sidebar = document.getElementById("responsive-sidebar");
-      const toggle = document.getElementById("sidebar-toggle");
-      if (
-        isOpen &&
-        sidebar &&
-        !sidebar.contains(event.target as Node) &&
-        toggle &&
-        !toggle.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const menuSections: MenuSection[] = [
-    {
-      title: "Main",
-      items: [
-        { icon: Home, label: "Dashboard", path: "/dashboard" },
-        { icon: FileText, label: "My Documents", path: "/documents" },
-        { icon: BookOpen, label: "Create Capsule", path: "/create" },
-        { icon: Calendar, label: "Schedule", path: "/schedule" },
-      ]
-    },
-    {
-      title: "Academic",
-      items: [
-        { icon: Award, label: "Achievements", path: "/achievements" },
-        { icon: Brain, label: "AI Analysis", path: "/analysis" },
-      ]
-    },
-    {
-      title: "Account",
-      items: [
-        { icon: User, label: "Profile", path: "/profile" },
-        { icon: Settings, label: "Settings", path: "/settings" },
-        { icon: LogOut, label: "Sign Out", path: "/logout" },
-      ]
-    }
-  ];
-
-  // Main mobile toggle button
-  const toggleButton = (
-    <Button
-      id="sidebar-toggle"
-      variant="ghost"
-      size="icon"
-      onClick={() => setIsOpen(!isOpen)}
-      className={`fixed left-4 top-4 z-50 ${!isMobile ? 'hidden' : ''}`}
-    >
-      {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-    </Button>
-  );
-
-  // Render a menu item
-  const renderMenuItem = (item: MenuItem) => {
-    const isActive = location.pathname === item.path;
-    const Icon = item.icon;
+    ];
     
-    const menuItem = (
-      <Link
-        to={item.path}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-          isActive 
-            ? 'bg-primary/20 text-primary font-medium'
-            : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Icon className="h-4 w-4" />
-        {(!isMobile || isOpen) && <span>{item.label}</span>}
-      </Link>
-    );
-
-    // Add tooltips only in desktop collapsed state
-    if (!isMobile && !isOpen) {
-      return (
-        <TooltipProvider key={item.path}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {menuItem}
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{item.label}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+    // Add role-specific items
+    if (role === "faculty" || role === "admin") {
+      baseItems.splice(1, 0, {
+        label: "Create Capsule",
+        icon: <Plus className="h-5 w-5" />,
+        href: "/create",
+        active: path === "/create"
+      });
     }
-
-    return (
-      <div key={item.path}>
-        {menuItem}
-      </div>
-    );
+    
+    if (role === "librarian") {
+      baseItems.splice(1, 0, {
+        label: "Library Management",
+        icon: <CheckSquare className="h-5 w-5" />,
+        href: "/librarian",
+        active: path === "/librarian"
+      });
+    }
+    
+    return baseItems;
   };
 
+  const getDashboardPath = (role: UserRole): string => {
+    switch (role) {
+      case "faculty":
+        return "/faculty-dashboard";
+      case "student":
+        return "/student-dashboard";
+      case "admin":
+        return "/admin-dashboard";
+      case "librarian":
+        return "/librarian";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  const menuItems = user ? getMenuItems(user.role) : [];
+
   return (
-    <>
-      {toggleButton}
-      
-      <aside
-        id="responsive-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col 
-          ${isMobile 
-            ? `w-[250px] shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
-            : `w-${isOpen ? '[200px]' : '[64px]'} transition-width duration-300`
-          }
-          ${theme === 'dark' ? 'bg-gray-900/90' : 'bg-white/90'} 
-          backdrop-blur-lg border-r border-border/50`}
-      >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border/50">
-          {(!isMobile || isOpen) ? (
-            <h2 className="font-bold text-lg">TimeVault</h2>
-          ) : (
-            <span className="font-bold text-lg">TV</span>
+    <aside 
+      className={cn(
+        "fixed top-0 left-0 z-40 h-full bg-card border-r border-border pt-16 transition-all duration-300 ease-in-out",
+        isMobile ? (sidebarOpen ? "w-64" : "w-0 -translate-x-full") : (sidebarOpen ? "w-64" : "w-16"),
+      )}
+    >
+      <div className={cn("h-full flex flex-col", !sidebarOpen && !isMobile && "items-center")}>
+        <div className={cn("px-3 py-4", !sidebarOpen && !isMobile && "px-0")}>
+          <Link 
+            to="/" 
+            className={cn(
+              "flex items-center mb-6 px-2", 
+              !sidebarOpen && !isMobile && "justify-center px-0"
+            )}
+          >
+            <Archive className="h-6 w-6 text-primary" />
+            {(sidebarOpen || isMobile) && (
+              <span className="ml-2 text-xl font-semibold">TimeVault</span>
+            )}
+          </Link>
+          
+          <ScrollArea className="h-[calc(100vh-13rem)]">
+            <nav className="space-y-1 px-2">
+              {menuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center rounded-md py-2 px-3 text-sm font-medium transition-colors",
+                    item.active
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-muted hover:text-primary",
+                    !sidebarOpen && !isMobile && "justify-center px-2"
+                  )}
+                >
+                  <span className="flex items-center justify-center">
+                    {item.icon}
+                  </span>
+                  {(sidebarOpen || isMobile) && <span className="ml-3">{item.label}</span>}
+                </Link>
+              ))}
+            </nav>
+          </ScrollArea>
+        </div>
+        
+        <div className="mt-auto p-4 border-t border-border">
+          {user && (
+            <div className={cn("flex items-center mb-4", !sidebarOpen && !isMobile && "justify-center")}>
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                {user.name?.substring(0, 1).toUpperCase() || "U"}
+              </div>
+              {(sidebarOpen || isMobile) && (
+                <div className="ml-3 overflow-hidden">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+              )}
+            </div>
           )}
           
-          {!isMobile && (
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
-              <Menu className="h-4 w-4" />
+          <div className="space-y-2">
+            <Button 
+              variant="outline" 
+              className={cn("w-full justify-start", !sidebarOpen && !isMobile && "justify-center px-0")}
+              size="sm"
+              asChild
+            >
+              <Link to="/about">
+                <Settings className="h-4 w-4" />
+                {(sidebarOpen || isMobile) && <span className="ml-2">Settings</span>}
+              </Link>
             </Button>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-          {menuSections.map((section, index) => (
-            <div key={index}>
-              {(!isMobile || isOpen) && (
-                <h3 className="text-xs font-medium text-muted-foreground px-3 mb-2">
-                  {section.title}
-                </h3>
-              )}
-              <div className="space-y-1">
-                {section.items.map(renderMenuItem)}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="p-3 border-t border-border/50">
-          <Button 
-            className={`w-full justify-start gap-2 ${!isOpen && !isMobile ? 'px-2' : ''}`}
-            size={!isOpen && !isMobile ? "icon" : "default"}
-          >
-            <Plus className="h-4 w-4" />
-            {(!isMobile || isOpen) && <span>New Capsule</span>}
-          </Button>
-        </div>
-        
-        {(!isMobile || isOpen) && (
-          <div className="p-3 border-t border-border/50 flex items-center">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium mr-3">
-              JD
-            </div>
-            <div className="overflow-hidden">
-              <p className="font-medium truncate">John Doe</p>
-              <p className="text-xs text-muted-foreground truncate">john.doe@example.com</p>
-            </div>
+            
+            <Button 
+              variant="outline" 
+              className={cn("w-full justify-start", !sidebarOpen && !isMobile && "justify-center px-0")}
+              size="sm"
+              onClick={logout}
+            >
+              <LogOut className="h-4 w-4" />
+              {(sidebarOpen || isMobile) && <span className="ml-2">Logout</span>}
+            </Button>
           </div>
-        )}
-      </aside>
-      
-      {/* Overlay for mobile */}
-      {isMobile && isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-      
-      {/* Main content padding */}
-      <div 
-        className={`transition-all duration-300 ${
-          !isMobile ? (isOpen ? 'pl-[200px]' : 'pl-[64px]') : ''
-        }`}
-      >
-        {/* Your page content goes here */}
+        </div>
       </div>
-    </>
+    </aside>
   );
 };
 

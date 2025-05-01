@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Library from "./pages/Library";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
+import TimeVault from "./pages/TimeVault";
 
 // Components
 import { AuthProvider, useAuth, UserRole } from "./contexts/AuthContext";
@@ -174,11 +176,19 @@ const AppRoutes = () => {
             <ViewCapsule />
           </ProtectedRoute>
         } />
+        
         <Route path="/graduation-memories" element={
           <ProtectedRoute>
             <GraduationMemories />
           </ProtectedRoute>
         } />
+        
+        <Route path="/time-vault" element={
+          <ProtectedRoute>
+            <TimeVault />
+          </ProtectedRoute>
+        } />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>

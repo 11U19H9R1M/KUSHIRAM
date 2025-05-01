@@ -17,7 +17,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isMobile = useIsMobile();
-  const { isAuthenticated } = useAuth(); // Add auth check
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Redirect if not authenticated
@@ -58,7 +58,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         />
       )}
       
-      {/* ResponsiveSidebar component */}
+      {/* ResponsiveSidebar component - removed incorrect props */}
       <ResponsiveSidebar />
       
       <div className="flex-1 flex flex-col">
