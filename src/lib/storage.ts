@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Define shared dummy accounts for global access
@@ -17,7 +16,7 @@ export const SHARED_ACCOUNTS = {
  * Gets the current user prefix for storage
  * Modified to allow reading from shared accounts
  */
-const getCurrentUserPrefix = (forShared: boolean = false): string => {
+export const getCurrentUserPrefix = (forShared: boolean = false): string => {
   if (forShared) {
     return "shared_"; // Use a shared prefix for cross-user access
   }

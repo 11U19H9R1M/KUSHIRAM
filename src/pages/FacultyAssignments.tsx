@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -71,7 +70,7 @@ const FacultyAssignments = () => {
       setAssignments(allAssignments);
       
       // Extract unique course codes
-      const uniqueCourses = Array.from(
+      const uniqueCourses: string[] = Array.from(
         new Set(allAssignments.map(assignment => assignment.courseCode))
       );
       setCourses(uniqueCourses);

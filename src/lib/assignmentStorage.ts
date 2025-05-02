@@ -1,12 +1,6 @@
-
 import { toast } from "sonner";
 import { Assignment, AssignmentSubmission } from "./assignmentTypes";
 import { getCurrentUserPrefix } from "./storage";
-
-// Helper function to get user-specific prefix
-const getCurrentUserPrefix = (): string => {
-  return localStorage.getItem("currentUserPrefix") || "";
-};
 
 // Get shared prefix for cross-user access
 const getSharedPrefix = (): string => {
