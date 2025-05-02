@@ -23,6 +23,7 @@ import GraduationMemories from "./pages/GraduationMemories";
 // Import our pages
 import FacultyAssignments from "./pages/FacultyAssignments";
 import StudentAssignments from "./pages/StudentAssignments";
+import SmartAssignmentNexus from "./pages/SmartAssignmentNexus"; // Import our new page
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -64,6 +65,16 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="student">
                   <StudentAssignments />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Smart Assignment Nexus route */}
+            <Route
+              path="/smart-assignments"
+              element={
+                <ProtectedRoute>
+                  <SmartAssignmentNexus />
                 </ProtectedRoute>
               }
             />
