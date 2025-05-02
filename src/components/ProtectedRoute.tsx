@@ -1,54 +1,42 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  requiredRole?: UserRole | UserRole[];
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  // Show loading while checking authentication
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  
+  // If still loading authentication status, show nothing yet
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div className="flex h-screen w-full items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+    </div>;
   }
-
-  // If not authenticated, redirect to login page
+  
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    toast.error("You must be logged in to access this page");
+    return <Navigate to="/login" replace />;
   }
-
-  // If allowedRoles is defined and user's role is not included, redirect to appropriate dashboard
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    let redirectPath = '/dashboard';
+  
+  // If role check is needed
+  if (requiredRole && user) {
+    const hasAccess = Array.isArray(requiredRole)
+      ? requiredRole.includes(user.role)
+      : user.role === requiredRole || user.role === "admin"; // Admins always have access
     
-    // Determine correct dashboard based on role
-    switch (user.role) {
-      case "librarian":
-        redirectPath = "/librarian";
-        break;
-      case "faculty":
-        redirectPath = "/faculty-dashboard";
-        break;
-      case "student":
-        redirectPath = "/student-dashboard";
-        break;
-      case "admin":
-        redirectPath = "/admin-dashboard";
-        break;
+    if (!hasAccess) {
+      toast.error("You don't have permission to access this page");
+      return <Navigate to="/dashboard" replace />;
     }
-    
-    return <Navigate to={redirectPath} replace />;
   }
-
-  // If authenticated and role is allowed (or no roles specified), render children
+  
+  // All checks passed, render the child components
   return <>{children}</>;
 };
 
