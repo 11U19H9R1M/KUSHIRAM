@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Clock, FileVideo, Upload, Search, Play } from "lucide-react";
 import { saveCapsule, getAllCapsules } from "@/lib/storage";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Recording {
   id: string;
@@ -62,7 +64,7 @@ const TimeVault = () => {
     );
   };
 
-  const handleUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setUploadForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -275,7 +277,7 @@ const TimeVault = () => {
                       <label htmlFor="description" className="text-sm font-medium">
                         Description
                       </label>
-                      <Input
+                      <Textarea
                         id="description"
                         name="description"
                         placeholder="Brief description of the recording content"

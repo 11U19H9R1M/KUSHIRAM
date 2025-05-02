@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -5,11 +6,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap, BookA, Newspaper, Lock, FileText, Book as BookIcon, Archive, FileVideo, BookCopy, Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit, Ticket } from "lucide-react";
+import { Book, Bookmark, BookOpen, Laptop, Video, Search, Clock, Award, GraduationCap, BookA, Newspaper, Lock, FileText, Book as BookIcon, Archive, FileVideo, BookCopy, Microscope, Building, Briefcase, PenTool, Scale, Heart, BrainCircuit, Ticket, UploadCloud, Users, User, BookMarked } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { saveCapsule, getAllCapsules } from "@/lib/storage";
 
 // Updated categories for books
 const bookCategories = [
@@ -157,6 +161,43 @@ interface LibraryTicket {
   bookId: string;
 }
 
+// Define sample books for each category
+const sampleBooks = [
+  {
+    id: "book1",
+    title: "Introduction to Machine Learning",
+    author: "Dr. Alan Turing",
+    category: "Computer Science",
+    available: true
+  },
+  {
+    id: "book2",
+    title: "Circuit Analysis Fundamentals",
+    author: "Prof. Marie Curie",
+    category: "Electrical Engineering",
+    available: true
+  },
+  {
+    id: "book3",
+    title: "Structural Mechanics",
+    author: "Dr. Isaac Newton",
+    category: "Civil Engineering",
+    available: false
+  }
+];
+
+// New interface for assignment submissions
+interface AssignmentSubmission {
+  id: string;
+  title: string;
+  courseCode: string;
+  submittedBy: string;
+  submittedDate: Date;
+  fileUrl: string;
+  status: "submitted" | "reviewed" | "graded";
+  feedback?: string;
+}
+
 const Library = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -165,6 +206,18 @@ const Library = () => {
   const [showTicketDialog, setShowTicketDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState<any>(null);
   const [tickets, setTickets] = useState<LibraryTicket[]>([]);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [assignmentForm, setAssignmentForm] = useState({
+    title: "",
+    courseCode: "",
+    description: "",
+    file: null as File | null,
+  });
+  const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const isStudent = user?.role === "student";
+  const isFaculty = user?.role === "faculty" || user?.role === "admin";
   
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -182,6 +235,9 @@ const Library = () => {
         console.error("Error loading tickets:", error);
       }
     }
+    
+    // Load existing assignment submissions
+    loadAssignmentSubmissions();
   }, [user?.id]);
 
   useEffect(() => {
@@ -196,6 +252,41 @@ const Library = () => {
       setFilteredCategories(filtered);
     }
   }, [searchQuery]);
+  
+  // Load assignment submissions from storage
+  const loadAssignmentSubmissions = () => {
+    const allCapsules = getAllCapsules();
+    const assignmentCapsules = allCapsules.filter(
+      capsule => capsule.documentType === "assignment"
+    );
+    
+    // Filter based on user role
+    const relevantSubmissions = assignmentCapsules
+      .filter(capsule => {
+        if (isFaculty) {
+          // Faculty can see all submissions
+          return true;
+        } else if (isStudent) {
+          // Students can only see their own submissions
+          return capsule.createdBy === user?.email;
+        }
+        return false;
+      })
+      .map(submission => ({
+        id: submission.id,
+        title: submission.title,
+        courseCode: submission.courseCode,
+        submittedBy: submission.createdBy,
+        submittedDate: new Date(submission.createdAt),
+        fileUrl: submission.mediaFiles && submission.mediaFiles.length > 0 
+          ? submission.mediaFiles[0].url 
+          : "#",
+        status: submission.status || "submitted",
+        feedback: submission.feedback
+      }));
+    
+    setSubmissions(relevantSubmissions);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,31 +331,69 @@ const Library = () => {
       }
     );
   };
-
-  // Define sample books for each category
-  const sampleBooks = [
-    {
-      id: "book1",
-      title: "Introduction to Machine Learning",
-      author: "Dr. Alan Turing",
-      category: "Computer Science",
-      available: true
-    },
-    {
-      id: "book2",
-      title: "Circuit Analysis Fundamentals",
-      author: "Prof. Marie Curie",
-      category: "Electrical Engineering",
-      available: true
-    },
-    {
-      id: "book3",
-      title: "Structural Mechanics",
-      author: "Dr. Isaac Newton",
-      category: "Civil Engineering",
-      available: false
+  
+  // Handle assignment file change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAssignmentForm(prev => ({ ...prev, file: e.target.files![0] }));
     }
-  ];
+  };
+  
+  // Handle assignment form change
+  const handleAssignmentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setAssignmentForm(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Submit assignment
+  const handleAssignmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!assignmentForm.title || !assignmentForm.courseCode || !assignmentForm.file) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    // Create assignment submission in local storage
+    setTimeout(() => {
+      const newSubmission = {
+        id: `assignment_${Date.now()}`,
+        title: assignmentForm.title,
+        courseCode: assignmentForm.courseCode,
+        description: assignmentForm.description,
+        documentType: "assignment",
+        createdBy: user?.email || "student@example.com",
+        createdAt: new Date().toISOString(),
+        status: "submitted",
+        mediaFiles: [{
+          name: assignmentForm.file?.name,
+          type: "document",
+          url: URL.createObjectURL(assignmentForm.file!),
+          size: assignmentForm.file?.size || 0
+        }]
+      };
+      
+      // Save to storage using the existing storage system
+      saveCapsule(newSubmission);
+      
+      // Update UI
+      loadAssignmentSubmissions();
+      
+      // Reset form
+      setAssignmentForm({
+        title: "",
+        courseCode: "",
+        description: "",
+        file: null,
+      });
+      
+      setIsSubmitting(false);
+      setShowSubmitDialog(false);
+      toast.success("Assignment submitted successfully");
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-accent/10">
@@ -273,7 +402,7 @@ const Library = () => {
         <div className="container px-4 md:px-6">
           <div className="mb-6 md:mb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
+              <div className="w-full md:w-auto">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Digital Library</h1>
                 <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
                   Access academic resources, textbooks, journals, and recorded lectures
@@ -293,6 +422,12 @@ const Library = () => {
                   <Ticket className="h-3 w-3 mr-1" />
                   Library Tickets
                 </Badge>
+                {isStudent && (
+                  <Badge variant="outline" className="bg-primary/10 border-primary/20">
+                    <UploadCloud className="h-3 w-3 mr-1" />
+                    Submit Assignments
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -311,10 +446,22 @@ const Library = () => {
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
+            
+            {isStudent && (
+              <Button 
+                type="button" 
+                onClick={() => setShowSubmitDialog(true)}
+                variant="outline"
+                className="flex-shrink-0"
+              >
+                <UploadCloud className="h-4 w-4 mr-2" />
+                Submit Assignment
+              </Button>
+            )}
           </form>
           
           <Tabs defaultValue="subjects" className="w-full mb-8">
-            <TabsList className="grid grid-cols-4 mb-6 w-full md:w-fit">
+            <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-6 w-full md:w-fit">
               <TabsTrigger value="subjects" className="flex items-center gap-2">
                 <Book className="h-4 w-4" />
                 <span className="hidden sm:inline">Categories</span>
@@ -334,6 +481,11 @@ const Library = () => {
                 <Ticket className="h-4 w-4" />
                 <span className="hidden sm:inline">My Tickets</span>
                 <span className="sm:hidden">Tickets</span>
+              </TabsTrigger>
+              <TabsTrigger value="assignments" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Assignments</span>
+                <span className="sm:hidden">Assignments</span>
               </TabsTrigger>
             </TabsList>
             
@@ -361,7 +513,17 @@ const Library = () => {
                           <span>{category.videos} Videos</span>
                         </div>
                       </div>
-                      <Button className="w-full" onClick={() => document.querySelector('button[value="books"]')?.click()}>Browse Resources</Button>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => {
+                          const element = document.querySelector('button[value="books"]');
+                          if (element) {
+                            (element as HTMLElement).click();
+                          }
+                        }}
+                      >
+                        Browse Resources
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -448,7 +610,11 @@ const Library = () => {
                             </span>
                           </div>
                         </div>
-                        <Button variant="secondary" size="sm">
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={() => toast.info(`Video lecture "${video.title}" is now playing.`)}
+                        >
                           <Video className="h-3 w-3 mr-1" />
                           Watch
                         </Button>
@@ -505,7 +671,7 @@ const Library = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center">
+                <div className="text-center py-12">
                   <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-xl font-medium mb-2">No library tickets yet</h3>
                   <p className="text-muted-foreground mb-6">
@@ -519,6 +685,168 @@ const Library = () => {
                   }}>
                     Browse Books
                   </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="assignments">
+              {isStudent ? (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-semibold">My Submitted Assignments</h3>
+                    <Button onClick={() => setShowSubmitDialog(true)}>
+                      <UploadCloud className="h-4 w-4 mr-2" />
+                      New Submission
+                    </Button>
+                  </div>
+                  
+                  {submissions.length > 0 ? (
+                    <div className="space-y-4">
+                      {submissions.map((submission) => (
+                        <Card key={submission.id} className="overflow-hidden">
+                          <div className="flex border-l-4 border-primary">
+                            <div className="p-4 flex-1">
+                              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                <div>
+                                  <h3 className="font-medium text-lg">{submission.title}</h3>
+                                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <BookOpen className="h-3 w-3" />
+                                      {submission.courseCode}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {submission.submittedDate.toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className={
+                                    submission.status === "submitted" 
+                                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                                      : submission.status === "reviewed"
+                                      ? "bg-blue-100 text-blue-800 border-blue-200" 
+                                      : "bg-green-100 text-green-800 border-green-200"
+                                  }>
+                                    {submission.status === "submitted" 
+                                      ? "Submitted" 
+                                      : submission.status === "reviewed" 
+                                      ? "Reviewed" 
+                                      : "Graded"}
+                                  </Badge>
+                                  
+                                  <Button size="sm" variant="outline" asChild>
+                                    <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      View
+                                    </a>
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              {submission.feedback && (
+                                <div className="mt-3 p-2 bg-muted/50 rounded-md text-sm">
+                                  <p className="font-medium mb-1">Feedback:</p>
+                                  <p>{submission.feedback}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-xl font-medium mb-2">No assignments submitted yet</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Submit your first assignment by clicking the button above
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : isFaculty ? (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold">Student Assignment Submissions</h3>
+                  
+                  {submissions.length > 0 ? (
+                    <div className="space-y-4">
+                      {submissions.map((submission) => (
+                        <Card key={submission.id} className="overflow-hidden">
+                          <div className="flex border-l-4 border-primary">
+                            <div className="p-4 flex-1">
+                              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                <div>
+                                  <h3 className="font-medium text-lg">{submission.title}</h3>
+                                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <BookOpen className="h-3 w-3" />
+                                      {submission.courseCode}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <User className="h-3 w-3" />
+                                      {submission.submittedBy}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {submission.submittedDate.toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className={
+                                    submission.status === "submitted" 
+                                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                                      : submission.status === "reviewed"
+                                      ? "bg-blue-100 text-blue-800 border-blue-200" 
+                                      : "bg-green-100 text-green-800 border-green-200"
+                                  }>
+                                    {submission.status === "submitted" 
+                                      ? "Submitted" 
+                                      : submission.status === "reviewed" 
+                                      ? "Reviewed" 
+                                      : "Graded"}
+                                  </Badge>
+                                  
+                                  <Button size="sm" variant="outline" asChild>
+                                    <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      View
+                                    </a>
+                                  </Button>
+                                  
+                                  <Button 
+                                    size="sm" 
+                                    variant="default"
+                                    onClick={() => toast.info("Feedback submission feature is coming soon!")}
+                                  >
+                                    <PenTool className="h-3 w-3 mr-1" />
+                                    Add Feedback
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-xl font-medium mb-2">No student submissions yet</h3>
+                      <p className="text-muted-foreground">
+                        Student assignment submissions will appear here
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-medium mb-2">Access Restricted</h3>
+                  <p className="text-muted-foreground">
+                    You need to be a student or faculty member to access assignments
+                  </p>
                 </div>
               )}
             </TabsContent>
@@ -665,6 +993,102 @@ const Library = () => {
               Generate Ticket
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Assignment Submission Dialog */}
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Submit Assignment</DialogTitle>
+            <DialogDescription>
+              Upload your assignment for faculty review and grading.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAssignmentSubmit} className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-sm font-medium">
+                  Assignment Title*
+                </label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Research Paper"
+                  value={assignmentForm.title}
+                  onChange={handleAssignmentChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="courseCode" className="text-sm font-medium">
+                  Course Code*
+                </label>
+                <Input
+                  id="courseCode"
+                  name="courseCode"
+                  placeholder="CS101"
+                  value={assignmentForm.courseCode}
+                  onChange={handleAssignmentChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Brief description of your assignment"
+                value={assignmentForm.description}
+                onChange={handleAssignmentChange}
+                className="min-h-[80px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="file" className="text-sm font-medium">
+                Assignment File*
+              </label>
+              <Input
+                id="file"
+                name="file"
+                type="file"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Supported formats: PDF, DOC, DOCX, PPT, PPTX (max 50MB)
+              </p>
+            </div>
+            
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setShowSubmitDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-t-0 border-r-0 border-primary-foreground rounded-full mr-2"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="h-4 w-4 mr-2" />
+                    Submit Assignment
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
