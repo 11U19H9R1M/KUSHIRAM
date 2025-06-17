@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop, BookOpen, GraduationCap, Lock, AlertTriangle } from "lucide-react";
+import { Archive, Eye, EyeOff, LogIn, Mail, Shield, Book, Laptop, BookOpen, GraduationCap, Lock, AlertTriangle, Users, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -22,6 +21,7 @@ import BlockchainVerification from "@/components/BlockchainVerification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Define form schema
 const formSchema = z.object({
@@ -34,7 +34,7 @@ type FormData = z.infer<typeof formSchema>;
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState("timevault");
+  const [activeTab, setActiveTab] = useState("lms");
   const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,7 +55,7 @@ const Login = () => {
     if (currentEmail.endsWith('@library.com')) {
       setActiveTab("library");
     } else if (currentEmail && !currentEmail.endsWith('@library.com')) {
-      setActiveTab("timevault");
+      setActiveTab("lms");
     }
   }, [form.watch("email")]);
 
@@ -68,6 +68,17 @@ const Login = () => {
       return () => subscription.unsubscribe();
     }
   }, [form, loginError]);
+
+  // Quick login function for demo accounts
+  const quickLogin = async (email: string, password: string) => {
+    form.setValue("email", email);
+    form.setValue("password", password);
+    try {
+      await login(email, password);
+    } catch (error) {
+      console.error("Quick login failed:", error);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -95,14 +106,14 @@ const Login = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     // Pre-fill email based on selected tab
-    if (value === "timevault") {
-      // Clear email if it ends with @library.com
+    if (value === "lms") {
+      // Clear any library-specific email
       const currentEmail = form.getValues("email");
       if (currentEmail.endsWith('@library.com')) {
         form.setValue("email", "");
+        form.setValue("password", "");
       }
     } else if (value === "library") {
-      // Set default library email for easier access
       form.setValue("email", "librarian@library.com");
       form.setValue("password", "password123");
     }
@@ -117,28 +128,47 @@ const Login = () => {
             <div className="flex flex-col items-center text-center mb-8">
               <Link to="/" className="flex items-center gap-2 mb-6 group">
                 <Archive className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />
-                <span className="text-2xl font-bold tracking-tight">TimeVault</span>
+                <span className="text-2xl font-bold tracking-tight">EduVault LMS</span>
               </Link>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight gradient-text">Welcome back</h1>
               <p className="text-muted-foreground mt-2">
-                Enter your credentials to access your account
+                Access your Learning Management System
               </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
               <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="timevault" className="flex items-center gap-2">
-                  <Archive className="h-4 w-4" />
-                  <span>TimeVault</span>
+                <TabsTrigger value="lms" className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  <span>LMS Portal</span>
                 </TabsTrigger>
                 <TabsTrigger value="library" className="flex items-center gap-2">
                   <Book className="h-4 w-4" />
                   <span>Library</span>
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="timevault" className="mt-2 animate-fade-in">
-                <div className="text-sm text-muted-foreground">
-                  Sign in to access academic documents, time-locked vaults, and verification tools.
+              <TabsContent value="lms" className="mt-4 animate-fade-in">
+                <div className="text-sm text-muted-foreground mb-4">
+                  Access assignment management, submissions, and academic collaboration tools.
+                </div>
+                
+                {/* Quick Access Cards */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => quickLogin("student@example.com", "password123")}>
+                    <CardContent className="p-3 text-center">
+                      <Users className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                      <div className="font-medium text-sm">Student Portal</div>
+                      <div className="text-xs text-muted-foreground">Click to login as student</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => quickLogin("faculty@example.com", "password123")}>
+                    <CardContent className="p-3 text-center">
+                      <UserCheck className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                      <div className="font-medium text-sm">Faculty Portal</div>
+                      <div className="text-xs text-muted-foreground">Click to login as faculty</div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
               <TabsContent value="library" className="mt-2 animate-fade-in">
@@ -181,7 +211,7 @@ const Login = () => {
                               if (e.target.value.endsWith('@library.com')) {
                                 setActiveTab("library");
                               } else if (e.target.value && !e.target.value.endsWith('@library.com')) {
-                                setActiveTab("timevault");
+                                setActiveTab("lms");
                               }
                             }}
                           />
@@ -265,13 +295,28 @@ const Login = () => {
                   <p className="text-muted-foreground">Your connection to this site is encrypted and your credentials are securely stored.</p>
                 </div>
 
-                {/* Demo credentials */}
-                <div className="glass-card p-4 text-sm space-y-2 dark:bg-card/20 transition-all duration-300">
-                  <p className="font-medium">Demo Credentials:</p>
-                  <p><span className="opacity-70">Student:</span> student@example.com / password123</p>
-                  <p><span className="opacity-70">Faculty:</span> faculty@example.com / password123</p>
-                  <p><span className="opacity-70">Admin:</span> admin@example.com / password123</p>
-                  <p><span className="opacity-70">Library:</span> librarian@library.com / password123</p>
+                {/* Enhanced Demo credentials section */}
+                <div className="glass-card p-4 text-sm space-y-3 dark:bg-card/20 transition-all duration-300">
+                  <p className="font-medium text-center mb-3">Demo Accounts Available:</p>
+                  
+                  <div className="space-y-2">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                      <p className="font-medium text-blue-700 dark:text-blue-300">👨‍🎓 Students:</p>
+                      <p className="text-xs">student@example.com / password123</p>
+                      <p className="text-xs">alice@student.edu / password123</p>
+                    </div>
+                    
+                    <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                      <p className="font-medium text-green-700 dark:text-green-300">👨‍🏫 Faculty:</p>
+                      <p className="text-xs">faculty@example.com / password123</p>
+                      <p className="text-xs">prof.smith@faculty.edu / password123</p>
+                    </div>
+                    
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded">
+                      <p className="font-medium text-purple-700 dark:text-purple-300">🔧 Admin:</p>
+                      <p className="text-xs">admin@example.com / password123</p>
+                    </div>
+                  </div>
                 </div>
               </form>
             </Form>
@@ -283,21 +328,27 @@ const Login = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/5 dark:to-secondary/5 backdrop-blur-sm"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
             <div className="w-full max-w-md space-y-6">
-              {activeTab === "timevault" ? (
+              {activeTab === "lms" ? (
                 <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl mb-6 animate-fade-in">
-                  <h2 className="text-2xl font-bold mb-4 text-center">TimeVault Academia</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-center">EduVault LMS</h2>
                   <p className="text-base opacity-90 mb-6">
-                    Securely preserve and schedule the release of important academic documents
-                    with TimeVault's time-locked digital vaults and blockchain verification.
+                    Complete Learning Management System for seamless faculty-student interaction,
+                    assignment distribution, and submission tracking with AI-powered insights.
                   </p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
-                      <div className="font-medium mb-1">For Students</div>
-                      <p className="opacity-80">Access time-released course materials and submit assignments</p>
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <div className="bg-white/20 dark:bg-white/10 p-4 rounded-lg hover-lift">
+                      <div className="font-medium mb-2 flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        For Students
+                      </div>
+                      <p className="opacity-80">View assignments, submit answers, track deadlines, and collaborate with peers</p>
                     </div>
-                    <div className="bg-white/20 dark:bg-white/10 p-3 rounded-lg hover-lift">
-                      <div className="font-medium mb-1">For Faculty</div>
-                      <p className="opacity-80">Upload documents and schedule their release to students</p>
+                    <div className="bg-white/20 dark:bg-white/10 p-4 rounded-lg hover-lift">
+                      <div className="font-medium mb-2 flex items-center gap-2">
+                        <UserCheck className="h-4 w-4" />
+                        For Faculty
+                      </div>
+                      <p className="opacity-80">Upload assignments, review submissions, provide feedback, and track student progress</p>
                     </div>
                   </div>
                 </div>
@@ -321,35 +372,35 @@ const Login = () => {
                 </div>
               )}
               
-              {activeTab === "timevault" ? (
-                <BlockchainVerification />
-              ) : (
+              {activeTab === "lms" ? (
                 <div className="glass-card p-6 rounded-xl backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-xl animate-fade-in">
-                  <h2 className="text-xl font-bold mb-3">Discover Academic Resources</h2>
+                  <h2 className="text-xl font-bold mb-3">Smart Features</h2>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3 hover-lift">
                       <BookOpen className="w-5 h-5 text-primary mt-0.5" />
                       <div>
-                        <h3 className="font-medium">Academic Publications</h3>
-                        <p className="text-sm opacity-80">Access journals, textbooks, and reference materials</p>
+                        <h3 className="font-medium">AI-Powered Analytics</h3>
+                        <p className="text-sm opacity-80">Real-time plagiarism detection and originality scoring</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 hover-lift">
                       <GraduationCap className="w-5 h-5 text-primary mt-0.5" />
                       <div>
-                        <h3 className="font-medium">Specialized Collections</h3>
-                        <p className="text-sm opacity-80">Browse resources by subject area and field of study</p>
+                        <h3 className="font-medium">Interactive Collaboration</h3>
+                        <p className="text-sm opacity-80">Peer Q&A zones and real-time submission tracking</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 hover-lift">
                       <Shield className="w-5 h-5 text-primary mt-0.5" />
                       <div>
-                        <h3 className="font-medium">Secure Access</h3>
-                        <p className="text-sm opacity-80">Authenticated access to academic and research materials</p>
+                        <h3 className="font-medium">Secure Submissions</h3>
+                        <p className="text-sm opacity-80">Blockchain-style version tracking and deadline enforcement</p>
                       </div>
                     </div>
                   </div>
                 </div>
+              ) : (
+                <BlockchainVerification />
               )}
             </div>
           </div>

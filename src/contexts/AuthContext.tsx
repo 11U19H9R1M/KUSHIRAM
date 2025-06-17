@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,6 +16,8 @@ export interface User {
   profileImage?: string;
   lastLogin?: Date;
   accountCreated?: Date;
+  courseCode?: string; // For students
+  department?: string; // For faculty
 }
 
 interface AuthContextType {
@@ -43,60 +44,110 @@ const passwordSchema = z
   .regex(/[0-9]/, "Password must contain at least one number")
   .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
 
-// Mock database of users (in a real app, this would be in a real database)
+// Enhanced mock database with default accounts for easy testing
 const MOCK_USERS = [
+  // Student accounts
   {
-    id: "1",
+    id: "student1",
     email: "student@example.com",
-    password: "Password123!", // In a real app, this would be hashed
+    password: "password123",
     role: "student" as UserRole,
-    name: "John Student",
+    name: "John Smith",
+    courseCode: "CS101",
     lastLogin: new Date(),
     accountCreated: new Date("2023-01-15")
   },
   {
-    id: "2",
+    id: "student2", 
+    email: "alice@student.edu",
+    password: "password123",
+    role: "student" as UserRole,
+    name: "Alice Johnson",
+    courseCode: "CS101",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-02-10")
+  },
+  {
+    id: "student3",
+    email: "bob@student.edu", 
+    password: "password123",
+    role: "student" as UserRole,
+    name: "Bob Wilson",
+    courseCode: "CS102",
+    lastLogin: new Date(),
+    accountCreated: new Date("2023-02-15")
+  },
+  
+  // Faculty accounts
+  {
+    id: "faculty1",
     email: "faculty@example.com",
-    password: "Password123!",
+    password: "password123",
     role: "faculty" as UserRole,
     name: "Dr. Jane Faculty",
+    department: "Computer Science",
     lastLogin: new Date(),
     accountCreated: new Date("2022-08-10")
   },
   {
-    id: "3",
+    id: "faculty2",
+    email: "prof.smith@faculty.edu",
+    password: "password123", 
+    role: "faculty" as UserRole,
+    name: "Prof. Michael Smith",
+    department: "Mathematics",
+    lastLogin: new Date(),
+    accountCreated: new Date("2022-09-05")
+  },
+  {
+    id: "faculty3",
+    email: "dr.brown@faculty.edu",
+    password: "password123",
+    role: "faculty" as UserRole,
+    name: "Dr. Sarah Brown", 
+    department: "Physics",
+    lastLogin: new Date(),
+    accountCreated: new Date("2022-07-20")
+  },
+  
+  // Admin and Library accounts
+  {
+    id: "admin1",
     email: "admin@example.com",
-    password: "Password123!",
+    password: "password123",
     role: "admin" as UserRole,
     name: "Admin User",
     lastLogin: new Date(),
     accountCreated: new Date("2022-05-22")
   },
   {
-    id: "4",
+    id: "librarian1",
     email: "librarian@library.com",
-    password: "Password123!",
+    password: "password123",
     role: "librarian" as UserRole,
     name: "Library Admin",
     lastLogin: new Date(),
     accountCreated: new Date("2023-03-05")
   },
-  // Add default dummy accounts
+  
+  // Shared accounts
   {
     id: SHARED_ACCOUNTS.faculty.id,
     email: SHARED_ACCOUNTS.faculty.email,
-    password: "Password123!",
+    password: "password123",
     role: "faculty" as UserRole,
     name: "Shared Faculty Account",
+    department: "General",
     lastLogin: new Date(),
     accountCreated: new Date("2023-01-01")
   },
   {
     id: SHARED_ACCOUNTS.student.id,
     email: SHARED_ACCOUNTS.student.email,
-    password: "Password123!",
+    password: "password123",
     role: "student" as UserRole,
     name: "Shared Student Account",
+    courseCode: "DEMO101",
     lastLogin: new Date(),
     accountCreated: new Date("2023-01-01")
   }
@@ -159,11 +210,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case "librarian":
         return '/librarian';
       case "faculty":
-        return '/faculty-dashboard';
+        return '/smart-assignments'; // Direct faculty to Smart Assignment Nexus
       case "student":
-        return '/student-dashboard';
+        return '/smart-assignments'; // Direct students to Smart Assignment Nexus
       case "admin":
-        return '/admin-dashboard';
+        return '/dashboard';
       default:
         return '/dashboard';
     }
