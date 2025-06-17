@@ -8,18 +8,35 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/DatePicker";
+import DatePicker from "@/components/DatePicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlusCircle, Clock, Users, FileText, Calendar, BookOpen, TrendingUp, Eye, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import CapsuleCard from "@/components/CapsuleCard";
-import { getDocuments, saveDocument, Document } from "@/lib/storage";
+import { getAllCapsules, saveCapsule } from "@/lib/storage";
 import DashboardLayout from "@/components/DashboardLayout";
 import { getAllAssignments, getStudentSubmissionForAssignment } from "@/lib/assignmentStorage";
 import { Assignment, AssignmentSubmission } from "@/lib/assignmentTypes";
 import { useNavigate } from "react-router-dom";
+
+interface Document {
+  id: string;
+  title: string;
+  content: string;
+  createdBy: string;
+  createdAt: string;
+  unlockDate: string;
+  isShared: boolean;
+  tags: string[];
+  attachments: Array<{
+    name: string;
+    size: number;
+    type: string;
+    url: string;
+  }>;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -53,7 +70,7 @@ const Dashboard = () => {
   // Faculty functions (time capsule)
   const loadDocuments = () => {
     try {
-      const loadedDocuments = getDocuments(user?.email || "");
+      const loadedDocuments = getAllCapsules();
       console.log(`Found ${loadedDocuments.length} documents in total (${loadedDocuments.filter(d => d.createdBy === user?.email).length} user-specific, ${loadedDocuments.filter(d => d.isShared).length} shared)`);
       setDocuments(loadedDocuments);
     } catch (error) {
@@ -90,7 +107,7 @@ const Dashboard = () => {
       attachments: file ? Array.from(file).map(f => ({ name: f.name, size: f.size, type: f.type, url: URL.createObjectURL(f) })) : []
     };
 
-    const success = saveDocument(document);
+    const success = saveCapsule(document);
     
     if (success) {
       toast.success("Time capsule created successfully!");
@@ -375,7 +392,7 @@ const Dashboard = () => {
                   <Label className="text-right">
                     Unlock Date
                   </Label>
-                  <DatePicker date={selectedDate} setDate={setSelectedDate} />
+                  <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
                 </div>
                 <div>
                   <Label htmlFor="tags" className="text-right">
@@ -522,8 +539,16 @@ const Dashboard = () => {
                 filteredDocuments.map((document) => (
                   <CapsuleCard 
                     key={document.id} 
-                    document={document} 
-                    onUpdate={loadDocuments}
+                    id={document.id}
+                    title={document.title}
+                    description={document.content}
+                    createdAt={document.createdAt}
+                    unlockDate={document.unlockDate}
+                    isUnlocked={new Date(document.unlockDate) <= new Date()}
+                    documentType="examPaper"
+                    courseCode=""
+                    department=""
+                    isConfidential={true}
                   />
                 ))
               )}
@@ -537,8 +562,16 @@ const Dashboard = () => {
                 .map((document) => (
                   <CapsuleCard 
                     key={document.id} 
-                    document={document} 
-                    onUpdate={loadDocuments}
+                    id={document.id}
+                    title={document.title}
+                    description={document.content}
+                    createdAt={document.createdAt}
+                    unlockDate={document.unlockDate}
+                    isUnlocked={new Date(document.unlockDate) <= new Date()}
+                    documentType="examPaper"
+                    courseCode=""
+                    department=""
+                    isConfidential={true}
                   />
                 ))}
             </div>
@@ -551,8 +584,16 @@ const Dashboard = () => {
                 .map((document) => (
                   <CapsuleCard 
                     key={document.id} 
-                    document={document} 
-                    onUpdate={loadDocuments}
+                    id={document.id}
+                    title={document.title}
+                    description={document.content}
+                    createdAt={document.createdAt}
+                    unlockDate={document.unlockDate}
+                    isUnlocked={new Date(document.unlockDate) <= new Date()}
+                    documentType="examPaper"
+                    courseCode=""
+                    department=""
+                    isConfidential={true}
                   />
                 ))}
             </div>
