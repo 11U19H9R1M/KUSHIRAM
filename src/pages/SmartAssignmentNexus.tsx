@@ -18,10 +18,12 @@ const SmartAssignmentNexus = () => {
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<"three-panel" | "faculty" | "student">("three-panel");
+  const [notifications, setNotifications] = useState<any[]>([]);
   
   // Load assignments on component mount
   useEffect(() => {
     loadAssignments();
+    loadNotifications();
   }, []);
   
   // Load assignments based on user role
@@ -42,6 +44,18 @@ const SmartAssignmentNexus = () => {
       toast.error("Failed to load assignments");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Load notifications for students
+  const loadNotifications = () => {
+    if (user?.role === "student") {
+      try {
+        const userNotifications = getNotifications(user.email);
+        setNotifications(userNotifications);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+      }
     }
   };
   
@@ -66,7 +80,11 @@ const SmartAssignmentNexus = () => {
       const result = saveAssignment(assignment);
       
       if (result) {
-        toast.success("Assignment saved successfully");
+        toast.success(
+          assignment.visibleToStudents 
+            ? "Assignment published and students notified!" 
+            : "Assignment saved as draft"
+        );
         loadAssignments();
         setSelectedAssignment(assignment);
       } else {
@@ -95,16 +113,42 @@ const SmartAssignmentNexus = () => {
   // Calculate dashboard statistics
   const getDashboardStats = () => {
     const now = new Date();
-    const upcomingDeadlines = assignments.filter(a => new Date(a.dueDate) > now).length;
-    const totalSubmissions = submissions.length;
-    const activeAssignments = assignments.filter(a => a.visibleToStudents).length;
     
-    return {
-      totalAssignments: assignments.length,
-      activeAssignments,
-      upcomingDeadlines,
-      totalSubmissions
-    };
+    if (user?.role === "faculty" || user?.role === "admin") {
+      // Faculty statistics
+      const totalAssignments = assignments.length;
+      const activeAssignments = assignments.filter(a => a.visibleToStudents).length;
+      const draftAssignments = assignments.filter(a => !a.visibleToStudents).length;
+      const totalSubmissions = submissions.length;
+      const overdueAssignments = assignments.filter(a => new Date(a.dueDate) < now && a.visibleToStudents).length;
+      
+      return {
+        totalAssignments,
+        activeAssignments,
+        draftAssignments,
+        totalSubmissions,
+        overdueAssignments,
+        avgSubmissionsPerAssignment: activeAssignments > 0 ? Math.round(totalSubmissions / activeAssignments) : 0
+      };
+    } else {
+      // Student statistics
+      const availableAssignments = assignments.filter(a => a.visibleToStudents).length;
+      const upcomingDeadlines = assignments.filter(a => {
+        const dueDate = new Date(a.dueDate);
+        const daysDiff = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return daysDiff >= 0 && daysDiff <= 7 && a.visibleToStudents;
+      }).length;
+      const overdueAssignments = assignments.filter(a => new Date(a.dueDate) < now && a.visibleToStudents).length;
+      const unreadNotifications = notifications.filter(n => !n.read).length;
+      
+      return {
+        availableAssignments,
+        upcomingDeadlines,
+        overdueAssignments,
+        unreadNotifications,
+        completionRate: 85 // This would be calculated from actual submissions
+      };
+    }
   };
 
   const stats = getDashboardStats();
@@ -115,12 +159,12 @@ const SmartAssignmentNexus = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              {user?.role === "faculty" ? "Faculty Dashboard" : "Student Portal"} - EduVault LMS
+              {user?.role === "faculty" ? "Faculty Dashboard" : "Student Portal"} - Smart Assignment Nexus
             </h1>
             <p className="text-muted-foreground mt-1">
               {user?.role === "faculty" 
-                ? "Manage assignments, review submissions, and track student progress"
-                : "View assignments, submit work, and track your academic progress"
+                ? "Create assignments, track submissions, and manage student progress with AI-powered insights"
+                : "Access assignments, submit work, and track your academic progress"
               }
             </p>
           </div>
@@ -139,58 +183,109 @@ const SmartAssignmentNexus = () => {
 
         {/* Dashboard Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {user?.role === "faculty" ? "Total Assignments" : "Available Assignments"}
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{user?.role === "faculty" ? stats.totalAssignments : stats.activeAssignments}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {user?.role === "faculty" ? "Active Assignments" : "Upcoming Deadlines"}
-              </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{user?.role === "faculty" ? stats.activeAssignments : stats.upcomingDeadlines}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {user?.role === "faculty" ? "Total Submissions" : "Your Submissions"}
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalSubmissions}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {user?.role === "faculty" ? "Avg. Submissions" : "Completion Rate"}
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {user?.role === "faculty" 
-                  ? `${stats.activeAssignments > 0 ? Math.round(stats.totalSubmissions / stats.activeAssignments) : 0}%`
-                  : "85%"
-                }
-              </div>
-            </CardContent>
-          </Card>
+          {user?.role === "faculty" || user?.role === "admin" ? (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalAssignments}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.draftAssignments} drafts
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.activeAssignments}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.overdueAssignments} overdue
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalSubmissions}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Across all assignments
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg. Submissions</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.avgSubmissionsPerAssignment}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Per assignment
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Available Assignments</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.availableAssignments}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Due This Week</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.upcomingDeadlines}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Notifications</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.unreadNotifications}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Unread
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.completionRate}%</div>
+                  <p className="text-xs text-muted-foreground">
+                    Assignment completion
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
         
         {isLoading ? (
@@ -219,7 +314,7 @@ const SmartAssignmentNexus = () => {
                 <div className="bg-background border rounded-lg shadow-sm p-4">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    {user?.role === "faculty" ? "Student Collaboration Hub" : "Assignment Details & Submission"}
+                    {user?.role === "faculty" ? "Assignment Content & Preview" : "Assignment Details & Submission"}
                   </h2>
                   <ContentPanel 
                     assignment={selectedAssignment}

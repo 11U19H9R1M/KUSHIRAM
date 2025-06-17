@@ -1,52 +1,62 @@
 
-import { toast } from "sonner";
-import { Assignment, AssignmentSubmission } from "./assignmentTypes";
-import { getCurrentUserPrefix } from "./storage";
+import { Assignment, AssignmentSubmission, AssignmentNotification } from "./assignmentTypes";
 
-// Get shared prefix for cross-user access
-const getSharedPrefix = (): string => {
-  return "shared_"; 
+const ASSIGNMENTS_KEY = "lms_assignments";
+const SUBMISSIONS_KEY = "lms_submissions";
+const NOTIFICATIONS_KEY = "lms_notifications";
+
+// Get all assignments based on user role
+export const getAllAssignments = (isFaculty: boolean = false): Assignment[] => {
+  try {
+    const stored = localStorage.getItem(ASSIGNMENTS_KEY);
+    const assignments: Assignment[] = stored ? JSON.parse(stored) : [];
+    
+    if (isFaculty) {
+      // Faculty can see all assignments
+      console.log(`Found ${assignments.length} total assignments for faculty`);
+      return assignments;
+    } else {
+      // Students can only see visible assignments
+      const visibleAssignments = assignments.filter(assignment => assignment.visibleToStudents);
+      console.log(`Found ${visibleAssignments.length} visible assignments for students`);
+      return visibleAssignments;
+    }
+  } catch (error) {
+    console.error("Error loading assignments:", error);
+    return [];
+  }
 };
 
-// Save assignment data
-export const saveAssignment = (assignmentData: Assignment): boolean => {
+// Get assignment by ID
+export const getAssignmentById = (id: string): Assignment | null => {
   try {
-    // Ensure we have an ID for the assignment
-    if (!assignmentData.id) {
-      console.error("Cannot save assignment: Missing ID");
-      return false;
-    }
+    const assignments = getAllAssignments(true); // Get all assignments
+    return assignments.find(assignment => assignment.id === id) || null;
+  } catch (error) {
+    console.error("Error getting assignment by ID:", error);
+    return null;
+  }
+};
+
+// Save assignment (faculty only)
+export const saveAssignment = (assignment: Assignment): boolean => {
+  try {
+    const assignments = getAllAssignments(true);
+    const existingIndex = assignments.findIndex(a => a.id === assignment.id);
     
-    const userPrefix = getCurrentUserPrefix();
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get existing assignments
-    const existingData = localStorage.getItem(`${userPrefix}assignments`);
-    const assignments = existingData ? JSON.parse(existingData) : [];
-    
-    console.log("Attempting to save assignment:", assignmentData.id);
-    
-    // Check if assignment with this ID already exists
-    const existingIndex = assignments.findIndex((a: Assignment) => a.id === assignmentData.id);
-    
-    if (existingIndex !== -1) {
-      console.log(`Updating existing assignment at index: ${existingIndex}`);
-      assignments[existingIndex] = assignmentData;
+    if (existingIndex >= 0) {
+      assignments[existingIndex] = assignment;
     } else {
-      console.log("Adding new assignment to collection");
-      assignments.push(assignmentData);
+      assignments.push(assignment);
+      
+      // Send notifications to students if assignment is visible
+      if (assignment.visibleToStudents) {
+        sendAssignmentNotificationToStudents(assignment);
+      }
     }
     
-    // Save back to localStorage with user prefix
-    localStorage.setItem(`${userPrefix}assignments`, JSON.stringify(assignments));
-    
-    // Also save to shared storage for students to access
-    if (assignmentData.visibleToStudents) {
-      saveToSharedAssignments(assignmentData);
-    }
-    
-    console.log(`Assignment saved successfully with ID: ${assignmentData.id}`);
-    
+    localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+    console.log(`Assignment saved: ${assignment.title}`);
     return true;
   } catch (error) {
     console.error("Error saving assignment:", error);
@@ -54,126 +64,14 @@ export const saveAssignment = (assignmentData: Assignment): boolean => {
   }
 };
 
-// Helper function to save assignments to shared storage
-const saveToSharedAssignments = (assignmentData: Assignment): boolean => {
-  try {
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get existing assignments from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}assignments`);
-    const sharedAssignments = sharedData ? JSON.parse(sharedData) : [];
-    
-    // Check if assignment already exists in shared storage
-    const existingIndex = sharedAssignments.findIndex((a: Assignment) => a.id === assignmentData.id);
-    
-    if (existingIndex !== -1) {
-      // Update existing assignment
-      sharedAssignments[existingIndex] = assignmentData;
-    } else {
-      // Add new assignment
-      sharedAssignments.push(assignmentData);
-    }
-    
-    // Save back to localStorage with shared prefix
-    localStorage.setItem(`${sharedPrefix}assignments`, JSON.stringify(sharedAssignments));
-    
-    console.log(`Assignment also saved to shared storage with ID: ${assignmentData.id}`);
-    
-    return true;
-  } catch (error) {
-    console.error("Error saving assignment to shared storage:", error);
-    return false;
-  }
-};
-
-// Get all assignments (faculty sees all, students see only visible ones)
-export const getAllAssignments = (isFaculty: boolean = false) => {
-  try {
-    const userPrefix = getCurrentUserPrefix();
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get user-specific assignments (for faculty)
-    const userData = localStorage.getItem(`${userPrefix}assignments`);
-    const userAssignments = userData ? JSON.parse(userData) : [];
-    
-    if (isFaculty) {
-      return userAssignments;
-    }
-    
-    // For students, get only visible assignments from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}assignments`);
-    const sharedAssignments = sharedData ? JSON.parse(sharedData) : [];
-    
-    // Students only see assignments marked as visible
-    const visibleAssignments = sharedAssignments.filter((a: Assignment) => a.visibleToStudents);
-    
-    console.log(`Found ${visibleAssignments.length} visible assignments for students`);
-    
-    return visibleAssignments;
-  } catch (error) {
-    console.error("Error retrieving assignments:", error);
-    toast.error("Failed to load assignments");
-    return [];
-  }
-};
-
-// Get assignment by ID
-export const getAssignmentById = (id: string, isFaculty: boolean = false) => {
-  try {
-    const userPrefix = getCurrentUserPrefix();
-    const sharedPrefix = getSharedPrefix();
-    
-    // For faculty, check user's own assignments first
-    if (isFaculty) {
-      const userData = localStorage.getItem(`${userPrefix}assignments`);
-      const userAssignments = userData ? JSON.parse(userData) : [];
-      
-      const assignment = userAssignments.find((a: Assignment) => a.id === id);
-      if (assignment) return assignment;
-    }
-    
-    // For students or as fallback, check shared assignments
-    const sharedData = localStorage.getItem(`${sharedPrefix}assignments`);
-    const sharedAssignments = sharedData ? JSON.parse(sharedData) : [];
-    
-    const assignment = sharedAssignments.find((a: Assignment) => a.id === id);
-    
-    // Students can only see assignments marked as visible
-    if (!isFaculty && assignment && !assignment.visibleToStudents) {
-      return null;
-    }
-    
-    return assignment || null;
-  } catch (error) {
-    console.error("Error retrieving assignment:", error);
-    return null;
-  }
-};
-
-// Delete assignment
+// Delete assignment (faculty only)
 export const deleteAssignment = (id: string): boolean => {
   try {
-    const userPrefix = getCurrentUserPrefix();
-    const sharedPrefix = getSharedPrefix();
+    const assignments = getAllAssignments(true);
+    const filteredAssignments = assignments.filter(assignment => assignment.id !== id);
     
-    // Remove from faculty's storage
-    const userData = localStorage.getItem(`${userPrefix}assignments`);
-    const userAssignments = userData ? JSON.parse(userData) : [];
-    const filteredAssignments = userAssignments.filter((a: Assignment) => a.id !== id);
-    localStorage.setItem(`${userPrefix}assignments`, JSON.stringify(filteredAssignments));
-    
-    // Also remove from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}assignments`);
-    if (sharedData) {
-      const sharedAssignments = JSON.parse(sharedData);
-      const filteredShared = sharedAssignments.filter((a: Assignment) => a.id !== id);
-      localStorage.setItem(`${sharedPrefix}assignments`, JSON.stringify(filteredShared));
-    }
-    
-    // Remove all submissions for this assignment
-    removeAllSubmissionsForAssignment(id);
-    
-    console.log(`Assignment with ID: ${id} deleted successfully`);
+    localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(filteredAssignments));
+    console.log(`Assignment deleted: ${id}`);
     return true;
   } catch (error) {
     console.error("Error deleting assignment:", error);
@@ -182,67 +80,55 @@ export const deleteAssignment = (id: string): boolean => {
 };
 
 // Update assignment visibility
-export const updateAssignmentVisibility = (id: string, isVisible: boolean): boolean => {
+export const updateAssignmentVisibility = (id: string, visible: boolean): boolean => {
   try {
-    const assignment = getAssignmentById(id, true);
+    const assignments = getAllAssignments(true);
+    const assignmentIndex = assignments.findIndex(a => a.id === id);
     
-    if (!assignment) {
-      console.error(`Assignment with ID: ${id} not found`);
-      return false;
+    if (assignmentIndex >= 0) {
+      assignments[assignmentIndex].visibleToStudents = visible;
+      
+      // Send notifications when making visible
+      if (visible && !assignments[assignmentIndex].notificationSent) {
+        sendAssignmentNotificationToStudents(assignments[assignmentIndex]);
+        assignments[assignmentIndex].notificationSent = true;
+      }
+      
+      localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+      console.log(`Assignment visibility updated: ${id} -> ${visible}`);
+      return true;
     }
-    
-    assignment.visibleToStudents = isVisible;
-    
-    // Update assignment
-    const result = saveAssignment(assignment);
-    
-    if (result) {
-      console.log(`Assignment visibility updated to ${isVisible}`);
-    }
-    
-    return result;
+    return false;
   } catch (error) {
     console.error("Error updating assignment visibility:", error);
     return false;
   }
 };
 
-// Save assignment submission
-export const saveSubmission = (submissionData: AssignmentSubmission): boolean => {
+// Save submission (students only)
+export const saveSubmission = (submission: AssignmentSubmission): boolean => {
   try {
-    // Ensure we have an ID for the submission
-    if (!submissionData.id) {
-      console.error("Cannot save submission: Missing ID");
-      return false;
-    }
+    const submissions = getAllSubmissions();
     
-    const userPrefix = getCurrentUserPrefix();
-    const sharedPrefix = getSharedPrefix();
+    // Check if student has already submitted for this assignment
+    const existingIndex = submissions.findIndex(
+      s => s.assignmentId === submission.assignmentId && s.studentEmail === submission.studentEmail
+    );
     
-    // Get existing submissions
-    const existingData = localStorage.getItem(`${userPrefix}submissions`);
-    const submissions = existingData ? JSON.parse(existingData) : [];
-    
-    console.log("Attempting to save submission:", submissionData.id);
-    
-    // Check if submission with this ID already exists
-    const existingIndex = submissions.findIndex((s: AssignmentSubmission) => s.id === submissionData.id);
-    
-    if (existingIndex !== -1) {
-      console.log(`Updating existing submission at index: ${existingIndex}`);
-      submissions[existingIndex] = submissionData;
+    if (existingIndex >= 0) {
+      // Update existing submission
+      submissions[existingIndex] = submission;
+      console.log(`Submission updated for assignment: ${submission.assignmentId}`);
     } else {
-      console.log("Adding new submission to collection");
-      submissions.push(submissionData);
+      // Add new submission
+      submissions.push(submission);
+      console.log(`New submission saved for assignment: ${submission.assignmentId}`);
     }
     
-    // Save back to localStorage with user prefix (for student records)
-    localStorage.setItem(`${userPrefix}submissions`, JSON.stringify(submissions));
+    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions));
     
-    // Also save to shared storage for faculty to access
-    saveToSharedSubmissions(submissionData);
-    
-    console.log(`Submission saved successfully with ID: ${submissionData.id}`);
+    // Update assignment submission count
+    updateAssignmentSubmissionCount(submission.assignmentId);
     
     return true;
   } catch (error) {
@@ -251,180 +137,178 @@ export const saveSubmission = (submissionData: AssignmentSubmission): boolean =>
   }
 };
 
-// Helper function to save submissions to shared storage for faculty access
-const saveToSharedSubmissions = (submissionData: AssignmentSubmission): boolean => {
+// Get all submissions
+export const getAllSubmissions = (): AssignmentSubmission[] => {
   try {
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get existing submissions from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}submissions`);
-    const sharedSubmissions = sharedData ? JSON.parse(sharedData) : [];
-    
-    // Check if submission already exists in shared storage
-    const existingIndex = sharedSubmissions.findIndex((s: AssignmentSubmission) => s.id === submissionData.id);
-    
-    if (existingIndex !== -1) {
-      // Update existing submission
-      sharedSubmissions[existingIndex] = submissionData;
-    } else {
-      // Add new submission
-      sharedSubmissions.push(submissionData);
-    }
-    
-    // Save back to localStorage with shared prefix
-    localStorage.setItem(`${sharedPrefix}submissions`, JSON.stringify(sharedSubmissions));
-    
-    console.log(`Submission also saved to shared storage with ID: ${submissionData.id}`);
-    
-    return true;
+    const stored = localStorage.getItem(SUBMISSIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error("Error saving submission to shared storage:", error);
-    return false;
-  }
-};
-
-// Get all submissions for a specific assignment
-export const getSubmissionsForAssignment = (assignmentId: string) => {
-  try {
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get all submissions from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}submissions`);
-    const sharedSubmissions = sharedData ? JSON.parse(sharedData) : [];
-    
-    // Filter submissions for the specified assignment
-    const assignmentSubmissions = sharedSubmissions.filter(
-      (s: AssignmentSubmission) => s.assignmentId === assignmentId
-    );
-    
-    console.log(`Found ${assignmentSubmissions.length} submissions for assignment: ${assignmentId}`);
-    
-    return assignmentSubmissions;
-  } catch (error) {
-    console.error("Error retrieving submissions:", error);
+    console.error("Error loading submissions:", error);
     return [];
   }
 };
 
-// Get student's submission for a specific assignment
-export const getStudentSubmissionForAssignment = (assignmentId: string, studentEmail: string) => {
+// Get submissions for a specific assignment
+export const getSubmissionsForAssignment = (assignmentId: string): AssignmentSubmission[] => {
   try {
-    const userPrefix = getCurrentUserPrefix();
-    
-    // Get student's submissions
-    const userData = localStorage.getItem(`${userPrefix}submissions`);
-    const userSubmissions = userData ? JSON.parse(userData) : [];
-    
-    // Find submission for specific assignment
-    const submission = userSubmissions.find(
-      (s: AssignmentSubmission) => s.assignmentId === assignmentId && s.studentEmail === studentEmail
-    );
-    
-    return submission || null;
+    const submissions = getAllSubmissions();
+    return submissions.filter(submission => submission.assignmentId === assignmentId);
   } catch (error) {
-    console.error("Error retrieving student submission:", error);
+    console.error("Error getting submissions for assignment:", error);
+    return [];
+  }
+};
+
+// Get student's submission for specific assignment
+export const getStudentSubmissionForAssignment = (assignmentId: string, studentEmail: string): AssignmentSubmission | null => {
+  try {
+    const submissions = getAllSubmissions();
+    return submissions.find(
+      submission => submission.assignmentId === assignmentId && submission.studentEmail === studentEmail
+    ) || null;
+  } catch (error) {
+    console.error("Error getting student submission:", error);
     return null;
   }
 };
 
-// Update submission status (for faculty review/grading)
-export const updateSubmissionStatus = (
-  submissionId: string, 
-  status: "reviewed" | "graded" | "plagiarism_flagged",
-  feedback?: string,
-  grade?: number
-): boolean => {
+// Update submission status (faculty only)
+export const updateSubmissionStatus = (submissionId: string, status: AssignmentSubmission["status"]): boolean => {
   try {
-    const sharedPrefix = getSharedPrefix();
+    const submissions = getAllSubmissions();
+    const submissionIndex = submissions.findIndex(s => s.id === submissionId);
     
-    // Get all submissions from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}submissions`);
-    if (!sharedData) return false;
-    
-    const sharedSubmissions = JSON.parse(sharedData);
-    
-    // Find submission by ID
-    const index = sharedSubmissions.findIndex((s: AssignmentSubmission) => s.id === submissionId);
-    
-    if (index === -1) {
-      console.error(`Submission with ID: ${submissionId} not found`);
-      return false;
+    if (submissionIndex >= 0) {
+      submissions[submissionIndex].status = status;
+      localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions));
+      console.log(`Submission status updated: ${submissionId} -> ${status}`);
+      return true;
     }
-    
-    // Update submission
-    sharedSubmissions[index] = {
-      ...sharedSubmissions[index],
-      status,
-      ...(feedback !== undefined && { feedback }),
-      ...(grade !== undefined && { grade })
-    };
-    
-    // Save back to shared storage
-    localStorage.setItem(`${sharedPrefix}submissions`, JSON.stringify(sharedSubmissions));
-    
-    // Also update in student's storage if possible
-    updateStudentSubmission(sharedSubmissions[index]);
-    
-    console.log(`Submission status updated to ${status}`);
-    return true;
+    return false;
   } catch (error) {
     console.error("Error updating submission status:", error);
     return false;
   }
 };
 
-// Helper to update submission in student's storage
-const updateStudentSubmission = (submission: AssignmentSubmission): void => {
-  try {
-    // In a real app with backend, we'd use the student's ID to update their storage
-    // For this demo, we'll just ensure the shared storage is updated
-    console.log("Student submission would be updated in their storage");
-  } catch (error) {
-    console.error("Error updating student submission:", error);
-  }
-};
-
-// Remove all submissions for an assignment (when deleting an assignment)
-const removeAllSubmissionsForAssignment = (assignmentId: string): void => {
-  try {
-    const sharedPrefix = getSharedPrefix();
-    
-    // Get all submissions from shared storage
-    const sharedData = localStorage.getItem(`${sharedPrefix}submissions`);
-    if (!sharedData) return;
-    
-    const sharedSubmissions = JSON.parse(sharedData);
-    
-    // Filter out submissions for the specified assignment
-    const filteredSubmissions = sharedSubmissions.filter(
-      (s: AssignmentSubmission) => s.assignmentId !== assignmentId
-    );
-    
-    // Save filtered submissions back to shared storage
-    localStorage.setItem(`${sharedPrefix}submissions`, JSON.stringify(filteredSubmissions));
-    
-    console.log(`Removed all submissions for assignment: ${assignmentId}`);
-  } catch (error) {
-    console.error("Error removing submissions:", error);
-  }
-};
-
-// Basic plagiarism check (note: in a real app, this would be server-side)
-export const checkPlagiarism = (fileContent: string, assignmentId: string): boolean => {
-  // In a real app, this would be a complex server-side process
-  // For this demo, we'll just implement a simple placeholder
-  
-  try {
-    // Get existing submissions for this assignment
-    const submissions = getSubmissionsForAssignment(assignmentId);
-    
-    // In a real implementation, we would compare file contents
-    // Here we'll just assume no plagiarism for the demo
-    console.log("Performed simple plagiarism check (mock implementation)");
-    
-    return false; // false means no plagiarism detected
-  } catch (error) {
-    console.error("Error in plagiarism check:", error);
+// Check if user can submit to assignment (role-based permission)
+export const canUserSubmitToAssignment = (assignment: Assignment, userEmail: string, userRole: string): boolean => {
+  // Faculty cannot submit to their own assignments
+  if (userRole === "faculty" && assignment.createdBy === userEmail) {
     return false;
+  }
+  
+  // Students can submit if assignment is visible and not past due
+  if (userRole === "student") {
+    const now = new Date();
+    const dueDate = new Date(assignment.dueDate);
+    return assignment.visibleToStudents && now <= dueDate;
+  }
+  
+  // Admin can submit for testing purposes
+  if (userRole === "admin") {
+    return assignment.visibleToStudents;
+  }
+  
+  return false;
+};
+
+// Send notification to students (simulated)
+const sendAssignmentNotificationToStudents = (assignment: Assignment): void => {
+  try {
+    // In a real application, this would send actual emails
+    // For now, we'll simulate by creating notification records
+    
+    const notifications = getNotifications();
+    const studentEmails = [
+      "student@example.com",
+      "alice@student.edu", 
+      "bob@student.edu"
+    ]; // In real app, this would come from enrollment data
+    
+    studentEmails.forEach(email => {
+      const notification: AssignmentNotification = {
+        id: `notification-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+        assignmentId: assignment.id,
+        studentEmail: email,
+        sentAt: new Date().toISOString(),
+        type: "new_assignment",
+        read: false
+      };
+      
+      notifications.push(notification);
+    });
+    
+    localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+    console.log(`Notifications sent for assignment: ${assignment.title}`);
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+  }
+};
+
+// Get notifications for a user
+export const getNotifications = (userEmail?: string): AssignmentNotification[] => {
+  try {
+    const stored = localStorage.getItem(NOTIFICATIONS_KEY);
+    const allNotifications: AssignmentNotification[] = stored ? JSON.parse(stored) : [];
+    
+    if (userEmail) {
+      return allNotifications.filter(notification => notification.studentEmail === userEmail);
+    }
+    
+    return allNotifications;
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return [];
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = (notificationId: string): boolean => {
+  try {
+    const notifications = getNotifications();
+    const notificationIndex = notifications.findIndex(n => n.id === notificationId);
+    
+    if (notificationIndex >= 0) {
+      notifications[notificationIndex].read = true;
+      localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    return false;
+  }
+};
+
+// Update assignment submission count
+const updateAssignmentSubmissionCount = (assignmentId: string): void => {
+  try {
+    const assignments = getAllAssignments(true);
+    const assignmentIndex = assignments.findIndex(a => a.id === assignmentId);
+    
+    if (assignmentIndex >= 0) {
+      const submissionCount = getSubmissionsForAssignment(assignmentId).length;
+      assignments[assignmentIndex].totalSubmissions = submissionCount;
+      localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+    }
+  } catch (error) {
+    console.error("Error updating submission count:", error);
+  }
+};
+
+// Get assignments with submission stats for faculty
+export const getAssignmentsWithStats = (facultyEmail: string): Assignment[] => {
+  try {
+    const assignments = getAllAssignments(true);
+    const facultyAssignments = assignments.filter(a => a.createdBy === facultyEmail);
+    
+    return facultyAssignments.map(assignment => ({
+      ...assignment,
+      totalSubmissions: getSubmissionsForAssignment(assignment.id).length
+    }));
+  } catch (error) {
+    console.error("Error getting assignments with stats:", error);
+    return [];
   }
 };
