@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Assignment } from "@/lib/assignmentTypes";
+import { Assignment, AssignmentFile } from "@/lib/assignmentTypes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileUp, Eye, Plus, FileText, Users, Clock, AlertCircle } from "lucide-react";
+import { Calendar, FileUp, Eye, Plus, FileText, Users, Clock, AlertCircle, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { isValidDueDate } from "@/lib/assignmentStorage";
 
 interface FacultyPanelProps {
   assignments: Assignment[];
@@ -39,7 +40,7 @@ const FacultyPanel = ({
     courseCode: "",
     dueDate: "",
     visibleToStudents: false,
-    file: null as File | null,
+    files: [] as File[],
     submissionType: "file_upload" as "file_upload" | "text_submission" | "both",
     difficulty: "medium",
     tags: "",
@@ -55,7 +56,7 @@ const FacultyPanel = ({
       courseCode: "",
       dueDate: "",
       visibleToStudents: false,
-      file: null,
+      files: [],
       submissionType: "file_upload",
       difficulty: "medium",
       tags: "",
@@ -76,11 +77,20 @@ const FacultyPanel = ({
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
   
-  // Handle file changes
+  // Handle multiple file changes
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, file: e.target.files![0] }));
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFormData(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
     }
+  };
+  
+  // Remove file from selection
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index)
+    }));
   };
   
   // Handle assignment creation
@@ -92,12 +102,28 @@ const FacultyPanel = ({
       return;
     }
     
-    if (formData.submissionType === "file_upload" && !formData.file) {
-      toast.error("Please upload a template document for file submissions");
+    // Validate due date
+    if (!isValidDueDate(formData.dueDate)) {
+      toast.error("Due date must be today or in the future");
+      return;
+    }
+    
+    if (formData.submissionType === "file_upload" && formData.files.length === 0) {
+      toast.error("Please upload at least one template document for file submissions");
       return;
     }
     
     try {
+      // Process uploaded files
+      const assignmentFiles: AssignmentFile[] = formData.files.map((file, index) => ({
+        id: `file-${Date.now()}-${index}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: URL.createObjectURL(file),
+        uploadedAt: new Date().toISOString()
+      }));
+      
       // Create new assignment
       const newAssignment: Assignment = {
         id: `assignment-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
@@ -107,12 +133,11 @@ const FacultyPanel = ({
         courseCode: formData.courseCode,
         createdBy: user?.email || "",
         createdAt: new Date().toISOString(),
+        uploadedAt: new Date().toISOString(), // Auto-generated upload date
         dueDate: new Date(formData.dueDate).toISOString(),
         visibleToStudents: formData.visibleToStudents,
         submissionType: formData.submissionType,
-        fileName: formData.file?.name,
-        fileSize: formData.file?.size,
-        fileUrl: formData.file ? URL.createObjectURL(formData.file) : undefined,
+        files: assignmentFiles,
         allowedFormats: ["pdf", "docx", "doc"],
         maxFileSize: 10485760, // 10MB
         difficulty: formData.difficulty as any,
@@ -248,21 +273,49 @@ const FacultyPanel = ({
                 </select>
               </div>
               
-              {/* Template File Upload */}
+              {/* Multiple File Upload */}
               {(formData.submissionType === "file_upload" || formData.submissionType === "both") && (
                 <div className="space-y-2">
-                  <Label htmlFor="file">Template Document*</Label>
+                  <Label htmlFor="files">Template Documents* (Multiple PDFs allowed)</Label>
                   <Input
-                    id="file"
-                    name="file"
+                    id="files"
+                    name="files"
                     type="file"
                     accept=".pdf,.docx,.doc"
                     onChange={handleFileChange}
-                    required={formData.submissionType === "file_upload"}
+                    multiple
                   />
                   <p className="text-xs text-muted-foreground">
-                    Upload the assignment template that students will download, complete, and re-upload (max 10MB)
+                    Upload assignment templates that students will download and complete (max 10MB each)
                   </p>
+                  
+                  {/* Display selected files */}
+                  {formData.files.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Selected Files:</Label>
+                      <div className="space-y-2">
+                        {formData.files.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              <span className="text-sm">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -278,6 +331,9 @@ const FacultyPanel = ({
                     onChange={handleInputChange}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Can be set to today or any future date
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="scheduledPublish">Scheduled Publish (Optional)</Label>
@@ -382,6 +438,11 @@ const FacultyPanel = ({
                                className="text-xs">
                           {assignment.difficulty}
                         </Badge>
+                        {assignment.files && assignment.files.length > 1 && (
+                          <Badge variant="outline" className="text-xs">
+                            {assignment.files.length} files
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -419,6 +480,13 @@ const FacultyPanel = ({
                       <span className="mx-2">•</span>
                       <span>{formatDate(assignment.dueDate)}</span>
                     </div>
+                    
+                    {assignment.uploadedAt && (
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <FileUp className="h-3 w-3 mr-1" />
+                        Uploaded: {formatDate(assignment.uploadedAt)}
+                      </div>
+                    )}
                     
                     {assignment.submissionType && (
                       <div className="flex items-center text-xs text-muted-foreground">

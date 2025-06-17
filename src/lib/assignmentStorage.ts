@@ -1,9 +1,26 @@
-
 import { Assignment, AssignmentSubmission, AssignmentNotification } from "./assignmentTypes";
+import { checkPlagiarism, extractTextFromPDF } from "./plagiarismDetection";
 
 const ASSIGNMENTS_KEY = "lms_assignments";
 const SUBMISSIONS_KEY = "lms_submissions";
 const NOTIFICATIONS_KEY = "lms_notifications";
+
+// Utility function to get current date in proper timezone
+const getCurrentDateTime = (): string => {
+  return new Date().toISOString();
+};
+
+// Utility function to validate date (allows today and future dates)
+export const isValidDueDate = (dateString: string): boolean => {
+  const dueDate = new Date(dateString);
+  const now = new Date();
+  
+  // Set time to start of day for comparison to allow same day
+  const dueDateDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  return dueDateDay >= nowDay;
+};
 
 // Get all assignments based on user role
 export const getAllAssignments = (isFaculty: boolean = false): Assignment[] => {
@@ -43,6 +60,11 @@ export const saveAssignment = (assignment: Assignment): boolean => {
   try {
     const assignments = getAllAssignments(true);
     const existingIndex = assignments.findIndex(a => a.id === assignment.id);
+    
+    // Auto-generate upload date if not provided
+    if (!assignment.uploadedAt) {
+      assignment.uploadedAt = getCurrentDateTime();
+    }
     
     if (existingIndex >= 0) {
       assignments[existingIndex] = assignment;
@@ -105,15 +127,65 @@ export const updateAssignmentVisibility = (id: string, visible: boolean): boolea
   }
 };
 
-// Save submission (students only)
-export const saveSubmission = (submission: AssignmentSubmission): boolean => {
+// Save submission (students only) with plagiarism check
+export const saveSubmission = async (submission: AssignmentSubmission, files: File[]): Promise<boolean> => {
   try {
+    // Extract text content from PDF files
+    let combinedTextContent = "";
+    const processedFiles = [];
+    
+    for (const file of files) {
+      if (file.type === "application/pdf") {
+        const textContent = await extractTextFromPDF(file);
+        combinedTextContent += textContent + " ";
+        
+        processedFiles.push({
+          id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file),
+          textContent
+        });
+      } else {
+        processedFiles.push({
+          id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file)
+        });
+      }
+    }
+    
+    // Update submission with processed files and text content
+    submission.files = processedFiles;
+    submission.textContent = combinedTextContent.trim();
+    
     const submissions = getAllSubmissions();
     
     // Check if student has already submitted for this assignment
     const existingIndex = submissions.findIndex(
       s => s.assignmentId === submission.assignmentId && s.studentEmail === submission.studentEmail
     );
+    
+    // Get existing submissions for plagiarism check
+    const existingSubmissions = submissions.filter(s => 
+      s.assignmentId === submission.assignmentId && 
+      s.studentEmail !== submission.studentEmail
+    );
+    
+    // Run plagiarism check
+    if (submission.textContent) {
+      const plagiarismResult = await checkPlagiarism(submission, existingSubmissions);
+      submission.plagiarismScore = plagiarismResult.score;
+      submission.plagiarismDetails = plagiarismResult;
+      
+      // Auto-flag if high plagiarism
+      if (plagiarismResult.score >= 70) {
+        submission.status = "plagiarism_flagged";
+      }
+    }
     
     if (existingIndex >= 0) {
       // Update existing submission

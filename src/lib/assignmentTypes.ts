@@ -6,11 +6,10 @@ export interface Assignment {
   courseCode: string;
   createdBy: string; // faculty email
   createdAt: string;
+  uploadedAt: string; // Auto-generated upload date
   dueDate: string;
   visibleToStudents: boolean;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: number;
+  files?: AssignmentFile[]; // Support multiple files
   allowedFormats?: string[]; // e.g. ["pdf", "docx"]
   maxFileSize?: number; // in bytes
   
@@ -29,6 +28,15 @@ export interface Assignment {
   totalSubmissions?: number; // Cache submission count
 }
 
+export interface AssignmentFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  uploadedAt: string;
+}
+
 export interface AssignmentSubmission {
   id: string;
   assignmentId: string;
@@ -36,9 +44,7 @@ export interface AssignmentSubmission {
   studentEmail: string;
   rollNumber: string;
   submittedAt: string;
-  fileUrl: string;
-  fileName: string;
-  fileSize: number;
+  files: SubmissionFile[];
   status: "submitted" | "reviewed" | "graded" | "plagiarism_flagged" | "late";
   feedback?: string;
   grade?: number;
@@ -46,6 +52,8 @@ export interface AssignmentSubmission {
   // Extended fields
   comments?: string; // Student submission comments
   originalityScore?: number; // AI-calculated originality percentage
+  plagiarismScore?: number; // Plagiarism detection score (0-100)
+  plagiarismDetails?: PlagiarismResult; // Detailed plagiarism analysis
   conceptMastery?: Record<string, number>; // Mastery level of concepts
   timeTaken?: number; // Time spent on assignment in minutes
   aiSuggestions?: string[]; // AI-generated feedback suggestions
@@ -54,6 +62,30 @@ export interface AssignmentSubmission {
   textSubmission?: string; // For text-based submissions
   isLateSubmission?: boolean; // Track late submissions
   submissionIpAddress?: string; // For audit trail
+  textContent?: string; // Extracted text from PDF files
+}
+
+export interface SubmissionFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  textContent?: string; // Extracted text content
+}
+
+export interface PlagiarismResult {
+  score: number; // 0-100 percentage
+  matches: PlagiarismMatch[];
+  checkedAt: string;
+  service: string; // e.g., "internal" or "copyleaks"
+}
+
+export interface PlagiarismMatch {
+  submissionId: string;
+  studentEmail: string;
+  similarity: number;
+  matchedText: string[];
 }
 
 // Notification interface for student alerts
