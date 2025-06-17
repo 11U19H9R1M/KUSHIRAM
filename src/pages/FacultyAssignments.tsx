@@ -125,7 +125,8 @@ const FacultyAssignments = () => {
         fileSize: formData.file.size,
         fileUrl: URL.createObjectURL(formData.file), // In a real app, this would be a server upload URL
         allowedFormats: formData.allowedFormats,
-        maxFileSize: formData.maxFileSize
+        maxFileSize: formData.maxFileSize,
+        submissionType: "file_upload" // Add the required submissionType property
       };
       
       // Save assignment

@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Assignment, AssignmentSubmission } from "@/lib/assignmentTypes";
-import { getAllAssignments, saveAssignment, getSubmissionsForAssignment } from "@/lib/assignmentStorage";
+import { getAllAssignments, saveAssignment, getSubmissionsForAssignment, getNotifications } from "@/lib/assignmentStorage";
 import FacultyPanel from "@/components/assignments/FacultyPanel";
 import ContentPanel from "@/components/assignments/ContentPanel";
 import AnalyticsPanel from "@/components/assignments/AnalyticsPanel";
