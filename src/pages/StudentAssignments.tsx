@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Calendar, FileUp, FileDown, Search, Eye, Check, X, Upload } from "lucide-react";
+import { Calendar, FileUp, FileDown, Search, Eye, Check, X, Upload, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Assignment, AssignmentSubmission } from "@/lib/assignmentTypes";
-import { getAllAssignments, getAssignmentById, saveSubmission, getStudentSubmissionForAssignment } from "@/lib/assignmentStorage";
+import { getAllAssignments, saveSubmission, getStudentSubmissionForAssignment } from "@/lib/assignmentStorage";
 
 const StudentAssignments = () => {
   const { user } = useAuth();
@@ -22,7 +22,7 @@ const StudentAssignments = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionData, setSubmissionData] = useState({
     rollNumber: "",
-    file: null as File | null
+    files: [] as File[]
   });
   const [mySubmissions, setMySubmissions] = useState<Record<string, AssignmentSubmission>>({});
 
@@ -30,7 +30,6 @@ const StudentAssignments = () => {
   useEffect(() => {
     if (user && user.role !== "student") {
       toast.error("You don't have permission to access this page");
-      // Redirect to dashboard or appropriate page
     }
   }, [user]);
 
@@ -75,16 +74,17 @@ const StudentAssignments = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSubmissionData(prev => ({ ...prev, file: e.target.files![0] }));
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setSubmissionData(prev => ({ ...prev, files: newFiles }));
     }
   };
 
   const handleSubmitAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!submissionData.rollNumber || !submissionData.file || !selectedAssignment || !user) {
-      toast.error("Please fill all required fields");
+    if (!submissionData.rollNumber || submissionData.files.length === 0 || !selectedAssignment || !user) {
+      toast.error("Please fill all required fields and select files");
       return;
     }
     
@@ -106,17 +106,12 @@ const StudentAssignments = () => {
         studentEmail: user.email,
         rollNumber: submissionData.rollNumber,
         submittedAt: new Date().toISOString(),
-        fileUrl: URL.createObjectURL(submissionData.file), // In a real app, this would be a server upload URL
-        fileName: submissionData.file.name,
-        fileSize: submissionData.file.size,
+        files: [], // Will be populated by saveSubmission
         status: "submitted"
       };
       
-      // In a real app, we'd do plagiarism check on the server
-      // For this demo, we'll just simulate a successful submission
-      
-      // Save submission
-      const result = saveSubmission(submission);
+      // Save submission with files
+      const result = await saveSubmission(submission, submissionData.files);
       
       if (result) {
         toast.success("Assignment submitted successfully");
@@ -131,8 +126,11 @@ const StudentAssignments = () => {
         // Reset form
         setSubmissionData({
           rollNumber: "",
-          file: null
+          files: []
         });
+        
+        // Reload assignments to update submission counts
+        loadAssignments();
       } else {
         toast.error("Failed to submit assignment");
       }
@@ -176,7 +174,7 @@ const StudentAssignments = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Student Assignments</h1>
           <p className="text-muted-foreground mt-1">
-            View and submit your assignments
+            View assignment PDFs and submit your solutions
           </p>
         </div>
         
@@ -241,32 +239,37 @@ const StudentAssignments = () => {
                         <span>Due: {formatDate(assignment.dueDate)}</span>
                       )}
                     </div>
+                    
+                    {/* Show uploaded files from faculty */}
+                    {assignment.files && assignment.files.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Assignment Files:</p>
+                        <div className="space-y-1">
+                          {assignment.files.map((file, index) => (
+                            <div key={file.id} className="flex items-center justify-between text-xs bg-muted/50 p-2 rounded">
+                              <span className="truncate">{file.name}</span>
+                              <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                                <a href={file.url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    asChild 
-                    className="flex-1"
-                  >
-                    <a href={assignment.fileUrl} target="_blank" rel="noopener noreferrer">
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Assignment
-                    </a>
-                  </Button>
-                  
                   {mySubmissions[assignment.id] ? (
                     <Button 
                       variant="secondary" 
                       size="sm" 
                       className="flex-1"
-                      asChild
+                      disabled
                     >
-                      <a href={mySubmissions[assignment.id].fileUrl} target="_blank" rel="noopener noreferrer">
-                        <Check className="h-4 w-4 mr-1" />
-                        View My Submission
-                      </a>
+                      <Check className="h-4 w-4 mr-1" />
+                      Submitted
                     </Button>
                   ) : (
                     <Button 
@@ -276,7 +279,7 @@ const StudentAssignments = () => {
                       disabled={isPastDue(assignment.dueDate)}
                     >
                       <Upload className="h-4 w-4 mr-1" />
-                      Submit Assignment
+                      Submit Answer
                     </Button>
                   )}
                 </CardFooter>
@@ -322,18 +325,33 @@ const StudentAssignments = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="file">Assignment File (PDF)*</Label>
+                <Label htmlFor="file">Answer Files (PDF)*</Label>
                 <Input
                   id="file"
                   name="file"
                   type="file"
                   accept=".pdf"
                   onChange={handleFileChange}
+                  multiple
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Upload your completed assignment as a PDF
+                  Upload your assignment solutions as PDF files
                 </p>
+                
+                {/* Show selected files */}
+                {submissionData.files.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium mb-1">Selected Files:</p>
+                    <div className="space-y-1">
+                      {submissionData.files.map((file, index) => (
+                        <div key={index} className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                          {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               
               <DialogFooter>

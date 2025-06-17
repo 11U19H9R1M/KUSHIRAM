@@ -26,6 +26,10 @@ export interface Assignment {
   submissionType: "file_upload" | "text_submission" | "both";
   notificationSent?: boolean; // Track if notification was sent to students
   totalSubmissions?: number; // Cache submission count
+  
+  // Legacy support for old file structure
+  fileUrl?: string; // Deprecated, use files array instead
+  fileName?: string; // Deprecated, use files array instead
 }
 
 export interface AssignmentFile {
@@ -63,6 +67,11 @@ export interface AssignmentSubmission {
   isLateSubmission?: boolean; // Track late submissions
   submissionIpAddress?: string; // For audit trail
   textContent?: string; // Extracted text from PDF files
+  
+  // Legacy support for old file structure
+  fileUrl?: string; // Deprecated, use files array instead
+  fileName?: string; // Deprecated, use files array instead
+  fileSize?: number; // Deprecated, use files array instead
 }
 
 export interface SubmissionFile {
@@ -96,4 +105,13 @@ export interface AssignmentNotification {
   sentAt: string;
   type: "new_assignment" | "deadline_reminder" | "grade_released";
   read: boolean;
+}
+
+// User interface extension for rollNumber
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  rollNumber?: string; // Add rollNumber to User interface
 }

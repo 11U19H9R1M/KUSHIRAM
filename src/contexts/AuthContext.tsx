@@ -11,8 +11,9 @@ export type UserRole = "student" | "faculty" | "admin" | "librarian";
 export interface User {
   id: string;
   email: string;
-  role: UserRole;
   name: string;
+  role: "student" | "faculty" | "admin";
+  rollNumber?: string; // Add rollNumber property for students
   profileImage?: string;
   lastLogin?: Date;
   accountCreated?: Date;
