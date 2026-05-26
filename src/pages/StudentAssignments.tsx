@@ -170,24 +170,52 @@ const StudentAssignments = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Student Assignments</h1>
-          <p className="text-muted-foreground mt-1">
-            View assignment PDFs and submit your solutions
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search assignments..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+      <div className="relative space-y-6">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 opacity-60"
+          style={{ background: "var(--gradient-mesh)" }}
+        />
+
+        {/* Header */}
+        <div className="relative overflow-hidden rounded-2xl border bg-card p-6 md:p-8 shadow-[var(--shadow-md)]">
+          <div
+            aria-hidden
+            className="absolute -top-20 -right-20 h-56 w-56 rounded-full opacity-30 blur-3xl"
+            style={{ background: "var(--gradient-primary)" }}
+          />
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                <FileUp className="h-3 w-3" /> My assignments
+              </span>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-3">Assignments</h1>
+              <p className="text-muted-foreground mt-1">
+                View assignment PDFs and submit your solutions.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <div className="rounded-xl border bg-background/60 backdrop-blur px-4 py-3 text-center min-w-[88px]">
+                <div className="text-2xl font-bold">{assignments.length}</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-0.5">Total</div>
+              </div>
+              <div className="rounded-xl border bg-background/60 backdrop-blur px-4 py-3 text-center min-w-[88px]">
+                <div className="text-2xl font-bold text-success">{Object.keys(mySubmissions).length}</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-0.5">Submitted</div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by title, course or description..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-10 h-11 rounded-xl bg-card border-border/60"
+          />
         </div>
         
         {isLoading ? (
@@ -210,47 +238,68 @@ const StudentAssignments = () => {
           </div>
         ) : filteredAssignments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredAssignments.map(assignment => (
-              <Card key={assignment.id} className="overflow-hidden transition-shadow hover:shadow-md">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{assignment.title}</CardTitle>
-                      <CardDescription>{assignment.courseCode}</CardDescription>
-                    </div>
-                    
-                    {mySubmissions[assignment.id] && (
-                      <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                        Submitted
+            {filteredAssignments.map(assignment => {
+              const submitted = !!mySubmissions[assignment.id];
+              const past = isPastDue(assignment.dueDate);
+              return (
+                <Card
+                  key={assignment.id}
+                  className="group relative overflow-hidden border-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lg)]"
+                >
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 top-0 h-1 opacity-80"
+                    style={{ background: submitted ? "linear-gradient(135deg, hsl(var(--success)), hsl(152 65% 55%))" : "var(--gradient-primary)" }}
+                  />
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <CardTitle className="truncate">{assignment.title}</CardTitle>
+                        <CardDescription className="font-mono text-xs mt-1">{assignment.courseCode}</CardDescription>
                       </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <p className="text-sm mb-2 line-clamp-2">
-                      {assignment.description || "No description provided"}
-                    </p>
-                    <div className="flex items-center text-xs text-muted-foreground mt-2">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {isPastDue(assignment.dueDate) ? (
-                        <span className="text-destructive">Past Due: {formatDate(assignment.dueDate)}</span>
+                      {submitted ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success px-2.5 py-1 text-xs font-medium">
+                          <Check className="h-3 w-3" /> Submitted
+                        </span>
+                      ) : past ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2.5 py-1 text-xs font-medium">
+                          <X className="h-3 w-3" /> Closed
+                        </span>
                       ) : (
-                        <span>Due: {formatDate(assignment.dueDate)}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 text-warning px-2.5 py-1 text-xs font-medium">
+                          Pending
+                        </span>
                       )}
                     </div>
-                    
-                    {/* Show uploaded files from faculty */}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                      {assignment.description || "No description provided"}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs mt-3">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent">
+                        <Calendar className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      {past ? (
+                        <span className="text-destructive font-medium">Past Due: {formatDate(assignment.dueDate)}</span>
+                      ) : (
+                        <span>Due {formatDate(assignment.dueDate)}</span>
+                      )}
+                    </div>
+
                     {assignment.files && assignment.files.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Assignment Files:</p>
-                        <div className="space-y-1">
-                          {assignment.files.map((file, index) => (
-                            <div key={file.id} className="flex items-center justify-between text-xs bg-muted/50 p-2 rounded">
-                              <span className="truncate">{file.name}</span>
-                              <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                      <div className="mt-4">
+                        <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-2">Assignment files</p>
+                        <div className="space-y-1.5">
+                          {assignment.files.map((file) => (
+                            <div key={file.id} className="flex items-center justify-between gap-2 text-xs bg-muted/60 hover:bg-muted px-3 py-2 rounded-lg transition-colors">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileDown className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="truncate">{file.name}</span>
+                              </div>
+                              <Button variant="ghost" size="sm" asChild className="h-7 px-2 hover:bg-primary/10 hover:text-primary">
                                 <a href={file.url} target="_blank" rel="noopener noreferrer">
-                                  <Download className="h-3 w-3" />
+                                  <Download className="h-3.5 w-3.5" />
                                 </a>
                               </Button>
                             </div>
@@ -258,41 +307,38 @@ const StudentAssignments = () => {
                         </div>
                       </div>
                     )}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex gap-2">
-                  {mySubmissions[assignment.id] ? (
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      className="flex-1"
-                      disabled
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Submitted
-                    </Button>
-                  ) : (
-                    <Button 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => openSubmissionDialog(assignment)}
-                      disabled={isPastDue(assignment.dueDate)}
-                    >
-                      <Upload className="h-4 w-4 mr-1" />
-                      Submit Answer
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardContent>
+                  <CardFooter>
+                    {submitted ? (
+                      <Button variant="secondary" size="sm" className="flex-1" disabled>
+                        <Check className="h-4 w-4 mr-1" />
+                        Already Submitted
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="flex-1 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-glow)] transition-shadow"
+                        onClick={() => openSubmissionDialog(assignment)}
+                        disabled={past}
+                      >
+                        <Upload className="h-4 w-4 mr-1" />
+                        Submit Answer
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-12 bg-muted/20 rounded-lg">
-            <FileDown className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No assignments found</h3>
-            <p className="text-muted-foreground">
-              {searchQuery ? 
-                `No assignments match your search for "${searchQuery}"` : 
+          <div className="rounded-2xl border border-dashed bg-card/50 py-16 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
+              <FileDown className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold">No assignments found</h3>
+            <p className="text-muted-foreground text-sm mt-1">
+              {searchQuery ?
+                `No assignments match "${searchQuery}"` :
                 "There are no assignments available for you right now"}
             </p>
           </div>
