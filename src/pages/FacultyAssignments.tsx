@@ -119,14 +119,14 @@ const FacultyAssignments = () => {
         courseCode: formData.courseCode,
         createdBy: user?.email || "",
         createdAt: new Date().toISOString(),
+        uploadedAt: new Date().toISOString(),
         dueDate: new Date(formData.dueDate).toISOString(),
         visibleToStudents: formData.visibleToStudents,
         fileName: formData.file.name,
-        fileSize: formData.file.size,
-        fileUrl: URL.createObjectURL(formData.file), // In a real app, this would be a server upload URL
+        fileUrl: URL.createObjectURL(formData.file),
         allowedFormats: formData.allowedFormats,
         maxFileSize: formData.maxFileSize,
-        submissionType: "file_upload" // Add the required submissionType property
+        submissionType: "file_upload"
       };
       
       // Save assignment

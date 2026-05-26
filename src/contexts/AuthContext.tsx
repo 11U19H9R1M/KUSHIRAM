@@ -12,7 +12,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: "student" | "faculty" | "admin";
+  role: UserRole;
   rollNumber?: string; // Add rollNumber property for students
   profileImage?: string;
   lastLogin?: Date;
